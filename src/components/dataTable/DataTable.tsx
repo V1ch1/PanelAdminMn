@@ -4,7 +4,7 @@ import { generateData } from "./generateData";
 import { format } from "date-fns";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import IcodcliDetail from "../../icodcliDetail/IcodCliDetail";
+import IcodcliDetail from "../../icodcliDetail/IcodcliDetail";
 
 const normalizeText = (text: string) => {
   return text

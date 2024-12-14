@@ -1,10 +1,16 @@
 import React from "react";
 import { format } from "date-fns";
 import { ClientDetails } from "../components/dataTable/types";
+import {
+  EnvelopeIcon,
+  UserIcon,
+  CheckIcon,
+  CalendarIcon,
+} from "@heroicons/react/20/solid";
 
 interface IcodcliDetailProps {
-  clientDetails: ClientDetails; // Definir el tipo de los datos que recibirá el componente
-  handleBackToTable: () => void; // Función para volver a la tabla (si la necesitas)
+  clientDetails: ClientDetails;
+  handleBackToTable: () => void;
 }
 
 const IcodcliDetail: React.FC<IcodcliDetailProps> = ({
@@ -12,31 +18,99 @@ const IcodcliDetail: React.FC<IcodcliDetailProps> = ({
   handleBackToTable,
 }) => {
   return (
-    <div className="p-6">
-      <button onClick={handleBackToTable} className="text-blue-500 mb-4">
-        Volver a la tabla
+    <div className="max-w-4xl mx-auto p-6 bg-white shadow-lg rounded-lg">
+      {/* Botón para regresar */}
+      <button
+        onClick={handleBackToTable}
+        className="flex items-center text-blue-500 mb-6 space-x-2 hover:text-blue-700"
+      >
+        <UserIcon className="h-5 w-5" />
+        <span>Volver a la tabla</span>
       </button>
-      <div>
-        <h2 className="text-2xl">Detalles de la Fila</h2>
-        <p>
-          <strong>Fuente:</strong> {clientDetails.fuente}
-        </p>
-        <p>
-          <strong>ICODCLI:</strong> {clientDetails.icodcli}
-        </p>
-        <p>
-          <strong>Correo:</strong> {clientDetails.correo}
-        </p>
-        <p>
-          <strong>Asunto:</strong> {clientDetails.asunto}
-        </p>
-        <p>
-          <strong>Fecha/Hora:</strong>{" "}
-          {format(new Date(clientDetails.horaFecha), "dd-MM-yyyy HH:mm")}
-        </p>
-        <p>
-          <strong>Estado:</strong> {clientDetails.estado}
-        </p>
+
+      {/* Titulo del detalle */}
+      <h2 className="text-3xl font-semibold text-gray-800 mb-6">
+        Detalles de {clientDetails.correo}
+      </h2>
+
+      {/* Información detallada */}
+      <div className="space-y-6">
+        <div className="flex items-center space-x-4">
+          <EnvelopeIcon className="h-6 w-6 text-gray-500" />
+          <div>
+            <p className="text-lg font-medium text-gray-700">
+              <strong>Correo:</strong> {clientDetails.correo}
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center space-x-4">
+          <UserIcon className="h-6 w-6 text-gray-500" />
+          <div>
+            <p className="text-lg font-medium text-gray-700">
+              <strong>Fuente principal:</strong> {clientDetails.fuente}
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center space-x-4">
+          <CheckIcon className="h-6 w-6 text-gray-500" />
+          <div>
+            <p className="text-lg font-medium text-gray-700">
+              <strong>ICODCLI:</strong> {clientDetails.icodcli}
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center space-x-4">
+          <CalendarIcon className="h-6 w-6 text-gray-500" />
+          <div>
+            <p className="text-lg font-medium text-gray-700">
+              <strong>Fecha/Hora:</strong>{" "}
+              {format(new Date(clientDetails.horaFecha), "dd-MM-yyyy HH:mm")}
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center space-x-4">
+          <CheckIcon className="h-6 w-6 text-gray-500" />
+          <div>
+            <p className="text-lg font-medium text-gray-700">
+              <strong>Estado:</strong> {clientDetails.estado}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Sección para más información */}
+      <div className="mt-8">
+        <h3 className="text-xl font-semibold text-gray-800 mb-4">
+          Resumen de la interacción:
+        </h3>
+        <div className="border-l-4 border-blue-500 pl-4 space-y-4">
+          {/* Línea de tiempo con iconos */}
+          <div className="flex items-center space-x-3">
+            <UserIcon className="h-5 w-5 text-blue-500" />
+            <p className="text-sm text-gray-600">
+              <strong>Número de clics:</strong> 3
+            </p>
+          </div>
+
+          <div className="flex items-center space-x-3">
+            <CalendarIcon className="h-5 w-5 text-blue-500" />
+            <p className="text-sm text-gray-600">
+              <strong>Fecha:</strong>{" "}
+              {format(new Date(clientDetails.horaFecha), "dd-MM-yyyy")}
+            </p>
+          </div>
+
+          <div className="flex items-center space-x-3">
+            <CheckIcon className="h-5 w-5 text-green-500" />
+            <p className="text-sm text-gray-600">
+              <strong>Estado:</strong> {clientDetails.estado}
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   );
