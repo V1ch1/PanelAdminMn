@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useAuth } from "../utils/AuthContext";
 import { useNavigate } from "react-router-dom";
+import Logo from "../../public/assets/logo-MN-25-peq.png";
 
 const Login = () => {
   const [username, setUsername] = useState("");
@@ -27,7 +28,9 @@ const Login = () => {
         onSubmit={handleSubmit}
         className="bg-white p-8 rounded shadow-md w-80"
       >
-        <h2 className="text-2xl mb-4 text-center">Iniciar Sesión</h2>
+        <div className="flex items-center justify-center h-20 shrink-0 items-center">
+          <img alt="Logo Mn" src={Logo} className="h-12 w-auto" />
+        </div>{" "}
         {error && (
           <div className="text-red-500 mb-4 text-center text-sm">{error}</div>
         )}

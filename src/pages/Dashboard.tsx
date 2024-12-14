@@ -17,7 +17,7 @@ import {
 } from "@heroicons/react/24/outline";
 
 import Logo from "../../public/assets/logo-MN-25-peq.png";
-import DataTable from "../utils/DataTable";
+import DataTable from "../components/dataTable/DataTable";
 
 const navigation = [
   { name: "Dashboard", href: "#", icon: HomeIcon },

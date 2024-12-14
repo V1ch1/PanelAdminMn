@@ -1,7 +1,11 @@
-module.exports = {
-  content: ["./src/**/*.{js,jsx,ts,tsx}"],
+export default {
+  content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
   theme: {
-    extend: {},
+    extend: {
+      colors: {
+        "blue-custom": "#0067C0",
+      },
+    },
   },
   plugins: [],
 };
