@@ -17,10 +17,6 @@ const RoutesApp = () => {
         path="/dashboard"
         element={user ? <Dashboard /> : <Navigate to="/login" />}
       />
-      <Route
-        path="/dashboard/:rowId"
-        element={user ? <Dashboard /> : <Navigate to="/login" />}
-      />
       <Route path="*" element={<Navigate to="/login" />} />
     </Routes>
   );

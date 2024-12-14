@@ -4,20 +4,22 @@ import { generateData } from "./generateData";
 import { format } from "date-fns";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import IcodcliDetail from "../../icodcliDetail/IcodCliDetail";
 
-// Función para normalizar el texto (eliminando tildes y haciendo minúsculas)
 const normalizeText = (text: string) => {
   return text
-    .normalize("NFD") // Descompone los caracteres acentuados en caracteres base y tildes
-    .replace(/[\u0300-\u036f]/g, "") // Elimina los caracteres de tildes
-    .toLowerCase(); // Convierte todo a minúsculas
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
 };
 
 const DataTable: React.FC = () => {
-  const [data, setData] = useState(generateData()); // Usamos useState para almacenar los datos
-  const [searchTerm, setSearchTerm] = useState(""); // Estado para el término de búsqueda
-  const [startDate, setStartDate] = useState<Date | null>(null); // Fecha de inicio para filtro
-  const [endDate, setEndDate] = useState<Date | null>(null); // Fecha de fin para filtro
+  const [data, setData] = useState(generateData());
+  const [searchTerm, setSearchTerm] = useState("");
+  const [startDate, setStartDate] = useState<Date | null>(null);
+  const [endDate, setEndDate] = useState<Date | null>(null);
+  const [selectedRow, setSelectedRow] = useState<any | null>(null); // Estado para la fila seleccionada
+  const [showDetails, setShowDetails] = useState(false); // Estado para mostrar/ocultar detalles de la fila
 
   const columns = useMemo(
     () => [
@@ -28,19 +30,19 @@ const DataTable: React.FC = () => {
       {
         Header: "Fecha / Hora",
         accessor: "horaFecha",
-        Cell: ({ value }: any) => format(value, "dd-MM-yyyy HH:mm"), // Formateamos la fecha para mostrarla
+        Cell: ({ value }: any) => format(value, "dd-MM-yyyy HH:mm"),
       },
       {
         Header: "ESTADO",
         accessor: "estado",
-        Cell: ({ value, row, column }: any) => (
+        Cell: ({ value, row }: any) => (
           <select
             className="px-2 py-1 border border-gray-300 rounded"
             value={value}
             onChange={(e) => {
               const updatedData = [...data];
               updatedData[row.index].estado = e.target.value;
-              setData(updatedData); // Actualizamos los datos de la tabla
+              setData(updatedData);
             }}
           >
             <option value="Pendiente">Pendiente</option>
@@ -49,10 +51,9 @@ const DataTable: React.FC = () => {
         ),
       },
     ],
-    [data] // Dependencia en 'data' para actualizar la tabla cuando cambien los datos
+    [data]
   );
 
-  // Filtrar los datos por el término de búsqueda
   const filteredData = useMemo(
     () =>
       data.filter((row) =>
@@ -63,21 +64,17 @@ const DataTable: React.FC = () => {
     [data, searchTerm]
   );
 
-  // Filtrar los datos por el rango de fechas
   const filteredByDate = useMemo(
     () =>
       filteredData.filter((row) => {
-        const rowDate = new Date(row.horaFecha); // Convertir la fecha de la fila en un objeto Date
-
-        if (startDate && rowDate < startDate) return false; // Si la fecha es antes de la fecha de inicio
-        if (endDate && rowDate > endDate) return false; // Si la fecha es después de la fecha de fin
-
-        return true; // Si pasa el filtro de fecha
+        const rowDate = new Date(row.horaFecha);
+        if (startDate && rowDate < startDate) return false;
+        if (endDate && rowDate > endDate) return false;
+        return true;
       }),
     [filteredData, startDate, endDate]
   );
 
-  // Usar react-table con ordenación y paginación
   const {
     getTableProps,
     getTableBodyProps,
@@ -95,22 +92,40 @@ const DataTable: React.FC = () => {
   } = useTable(
     {
       columns,
-      data: filteredByDate, // Usamos los datos filtrados por fecha
+      data: filteredByDate,
       initialState: { pageIndex: 0 },
     },
     useSortBy,
     usePagination
   );
 
-  // Función para limpiar los filtros de fecha
   const clearDateFilters = () => {
     setStartDate(null);
     setEndDate(null);
   };
 
+  // Manejar el clic en una fila de la tabla
+  const handleRowClick = (row: any) => {
+    setSelectedRow(row); // Guarda la fila seleccionada
+    setShowDetails(true); // Muestra los detalles
+  };
+
+  // Volver a la vista de la tabla
+  const handleBackToTable = () => {
+    setShowDetails(false); // Oculta los detalles
+    setSelectedRow(null); // Limpia la fila seleccionada
+  };
+  if (showDetails && selectedRow) {
+    return (
+      <IcodcliDetail
+        clientDetails={selectedRow} // Pasar los datos al componente hijo
+        handleBackToTable={handleBackToTable} // Pasar la función de vuelta
+      />
+    );
+  }
+
   return (
     <div className="p-6 rounded-lg shadow-lg">
-      {/* Filtro de rango de fechas */}
       <div className="mb-4">
         <div className="flex items-center space-x-4">
           <div>
@@ -142,7 +157,6 @@ const DataTable: React.FC = () => {
         </div>
       </div>
 
-      {/* Campo de búsqueda */}
       <div className="mb-4">
         <input
           type="text"
@@ -153,7 +167,6 @@ const DataTable: React.FC = () => {
         />
       </div>
 
-      {/* Tabla */}
       <table
         {...getTableProps()}
         className="min-w-full border-collapse border border-gray-200"
@@ -187,12 +200,15 @@ const DataTable: React.FC = () => {
             return (
               <tr
                 {...row.getRowProps()}
-                className={index % 2 === 0 ? "bg-white" : "bg-gray-100"}
+                className={
+                  index % 2 === 0 ? "bg-white" : "bg-gray-100 cursor-pointer"
+                }
+                onClick={() => handleRowClick(row.original)}
               >
                 {row.cells.map((cell) => (
                   <td
                     {...cell.getCellProps()}
-                    className="px-4 py-2 border border-gray-300"
+                    className="px-4 py-2 border border-gray-300 cursor-pointer"
                   >
                     {cell.render("Cell")}
                   </td>
@@ -203,7 +219,6 @@ const DataTable: React.FC = () => {
         </tbody>
       </table>
 
-      {/* Paginación */}
       <div className="mt-4 flex items-center justify-between">
         <div>
           <button
@@ -245,9 +260,9 @@ const DataTable: React.FC = () => {
             onChange={(e) => setPageSize(Number(e.target.value))}
             className="px-2 py-1 border border-gray-300 rounded"
           >
-            {[10, 20, 50].map((pageSize) => (
-              <option key={pageSize} value={pageSize}>
-                Mostrar {pageSize}
+            {[10, 20, 50].map((size) => (
+              <option key={size} value={size}>
+                Mostrar {size}
               </option>
             ))}
           </select>

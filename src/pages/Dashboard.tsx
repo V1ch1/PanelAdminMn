@@ -7,7 +7,6 @@ import {
 } from "@headlessui/react";
 import {
   Bars3Icon,
-  CalendarIcon,
   ChartPieIcon,
   DocumentDuplicateIcon,
   FolderIcon,
@@ -15,14 +14,12 @@ import {
   XMarkIcon,
   ArrowRightOnRectangleIcon,
 } from "@heroicons/react/24/outline";
-
 import Logo from "../../public/assets/logo-MN-25-peq.png";
 import DataTable from "../components/dataTable/DataTable";
 
 const navigation = [
   { name: "Dashboard", href: "#", icon: HomeIcon },
   { name: "Datos", href: "#", icon: FolderIcon },
-  { name: "Calendar", href: "#", icon: CalendarIcon },
   { name: "Documents", href: "#", icon: DocumentDuplicateIcon },
   { name: "Reports", href: "#", icon: ChartPieIcon },
   { name: "LogOut", href: "#", icon: ArrowRightOnRectangleIcon },
@@ -34,15 +31,21 @@ function classNames(...classes) {
 
 export default function Dashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [currentSection, setCurrentSection] = useState("Dashboard"); // El estado de la sección activa
+  const [currentSection, setCurrentSection] = useState("Dashboard"); // Estado de la sección activa
+  const [selectedRow, setSelectedRow] = useState(null); // Estado para la fila seleccionada
 
   const handleNavigationClick = (section) => {
-    setCurrentSection(section); // Cambia la sección activa
+    setCurrentSection(section);
+  };
+
+  const handleRowClick = (rowData) => {
+    setSelectedRow(rowData); // Actualizar la fila seleccionada
   };
 
   return (
     <>
       <div>
+        {/* Código del sidebar */}
         <Dialog
           open={sidebarOpen}
           onClose={setSidebarOpen}
@@ -52,7 +55,6 @@ export default function Dashboard() {
             transition
             className="fixed inset-0 bg-gray-900/80 transition-opacity duration-300 ease-linear data-[closed]:opacity-0"
           />
-
           <div className="fixed inset-0 flex">
             <DialogPanel
               transition
@@ -115,6 +117,7 @@ export default function Dashboard() {
           </div>
         </Dialog>
 
+        {/* Código para la vista lateral en dispositivos grandes */}
         <div className="hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:w-72 lg:flex-col">
           <div className="flex grow flex-col gap-y-5 overflow-y-auto border-r border-gray-200 bg-white px-6 pb-4">
             <div className="flex h-16 shrink-0 items-center">
@@ -170,11 +173,19 @@ export default function Dashboard() {
 
           <main className="py-10">
             <div className="px-4 sm:px-6 lg:px-8">
-              {/* Renderiza el componente basado en la sección activa */}
-              {currentSection === "Datos" && <DataTable />}
+              {/* Aquí cambiamos la vista según si hay una fila seleccionada */}
+              {selectedRow ? (
+                <div>
+                  <h2 className="text-2xl font-bold">Detalles de la Fila</h2>
+                  <pre>{JSON.stringify(selectedRow, null, 2)}</pre>
+                </div>
+              ) : (
+                currentSection === "Datos" && (
+                  <DataTable onRowClick={handleRowClick} />
+                )
+              )}
               {/* Agrega otros componentes según la sección activa */}
               {currentSection === "Dashboard" && <div>Dashboard Content</div>}
-              {currentSection === "Calendar" && <div>Calendar Content</div>}
               {currentSection === "Documents" && <div>Documents Content</div>}
               {currentSection === "Reports" && <div>Reports Content</div>}
             </div>

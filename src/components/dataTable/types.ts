@@ -16,3 +16,12 @@ export interface SortConfig {
   key: keyof DataRow;
   direction: "ascending" | "descending";
 }
+
+export interface ClientDetails {
+  fuente: string;
+  icodcli: string;
+  correo: string;
+  asunto: string;
+  horaFecha: string;
+  estado: string;
+}
