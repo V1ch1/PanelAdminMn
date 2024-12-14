@@ -92,24 +92,25 @@ const IcodcliDetail: React.FC<IcodcliDetailProps> = ({
           <div className="flex items-center space-x-3">
             <UserIcon className="h-5 w-5 text-blue-500" />
             <p className="text-sm text-gray-600">
-              <strong>Número de clics:</strong> 3
+              <strong>Número de clics:</strong>{" "}
+              {clientDetails.clics?.length || 0}
             </p>
           </div>
 
-          <div className="flex items-center space-x-3">
-            <CalendarIcon className="h-5 w-5 text-blue-500" />
-            <p className="text-sm text-gray-600">
-              <strong>Fecha:</strong>{" "}
-              {format(new Date(clientDetails.horaFecha), "dd-MM-yyyy")}
-            </p>
-          </div>
-
-          <div className="flex items-center space-x-3">
-            <CheckIcon className="h-5 w-5 text-green-500" />
-            <p className="text-sm text-gray-600">
-              <strong>Estado:</strong> {clientDetails.estado}
-            </p>
-          </div>
+          {/* Mostrar los clics realizados */}
+          {clientDetails.clics?.length > 0 && (
+            <div className="flex flex-col space-y-2 ml-8">
+              <strong className="text-sm text-gray-600">
+                Clics realizados:
+              </strong>
+              {clientDetails.clics.map((clic, index) => (
+                <div key={index} className="flex items-center space-x-3">
+                  <CheckIcon className="h-5 w-5 text-green-500" />
+                  <p className="text-sm text-gray-600">{clic}</p>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>

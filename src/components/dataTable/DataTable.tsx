@@ -32,6 +32,15 @@ const DataTable: React.FC = () => {
         accessor: "horaFecha",
         Cell: ({ value }: any) => format(value, "dd-MM-yyyy HH:mm"),
       },
+      // Nueva columna "Clics" antes de "Estado"
+      {
+        Header: "Clics",
+        accessor: "clics", // Accedemos a la propiedad 'clics'
+        Cell: ({ value }: any) => {
+          // Mostramos el número de clics, es decir, la longitud del array de clics
+          return value ? value.length : 0; // Si no hay clics, mostramos 0
+        },
+      },
       {
         Header: "ESTADO",
         accessor: "estado",
@@ -115,6 +124,7 @@ const DataTable: React.FC = () => {
     setShowDetails(false); // Oculta los detalles
     setSelectedRow(null); // Limpia la fila seleccionada
   };
+
   if (showDetails && selectedRow) {
     return (
       <IcodcliDetail
