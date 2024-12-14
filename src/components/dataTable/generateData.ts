@@ -20,7 +20,7 @@ export const generateData = (): DataRow[] => {
   const data: DataRow[] = [];
   for (let i = 0; i < 50; i++) {
     data.push({
-      fuente: sources[i % sources.length], // Asignamos las fuentes de forma cíclica
+      fuente: sources[i % sources.length],
       icodcli: `IC${i + 1}`,
       correo: `correo${i + 1}@example.com`,
       asunto: `Asunto ${i + 1}`,

@@ -209,14 +209,14 @@ const DataTable: React.FC = () => {
           <button
             onClick={() => gotoPage(0)}
             disabled={!canPreviousPage}
-            className="px-4 py-2 bg-blue-500 text-white rounded disabled:bg-gray-400 mx-2"
+            className="px-4 py-2 bg-red-500 text-white rounded disabled:bg-gray-400 mx-2"
           >
             {"<<"}
           </button>
           <button
             onClick={() => previousPage()}
             disabled={!canPreviousPage}
-            className="px-4 py-2 bg-blue-500 text-white rounded disabled:bg-gray-400 mx-2"
+            className="px-4 py-2 bg-red-500 text-white rounded disabled:bg-gray-400 mx-2"
           >
             {"<"}
           </button>
@@ -226,14 +226,14 @@ const DataTable: React.FC = () => {
           <button
             onClick={() => nextPage()}
             disabled={!canNextPage}
-            className="px-4 py-2 bg-blue-500 text-white rounded disabled:bg-gray-400 mx-2"
+            className="px-4 py-2 bg-red-500 text-white rounded disabled:bg-gray-400 mx-2"
           >
             {">"}
           </button>
           <button
             onClick={() => gotoPage(Math.ceil(rows.length / pageSize) - 1)}
             disabled={!canNextPage}
-            className="px-4 py-2 bg-blue-500 text-white rounded disabled:bg-gray-400 mx-2"
+            className="px-4 py-2 bg-red-500 text-white rounded disabled:bg-gray-400 mx-2"
           >
             {">>"}
           </button>
