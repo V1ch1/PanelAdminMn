@@ -8,38 +8,38 @@ import {
 import {
   Bars3Icon,
   ChartPieIcon,
-  DocumentDuplicateIcon,
-  FolderIcon,
+  CircleStackIcon,
   HomeIcon,
   XMarkIcon,
   ArrowRightOnRectangleIcon,
 } from "@heroicons/react/24/outline";
 import Logo from "../../public/assets/logo-MN-25-peq.png";
 import DataTable from "../components/dataTable/DataTable";
+import AnalitycsData from "../components/dashboard/AnalitycsData";
+import { RowData } from "../components/dataTable/types";
 
 const navigation = [
   { name: "Dashboard", href: "#", icon: HomeIcon },
-  { name: "Datos", href: "#", icon: FolderIcon },
-  { name: "Documents", href: "#", icon: DocumentDuplicateIcon },
+  { name: "Datos", href: "#", icon: CircleStackIcon },
   { name: "Reports", href: "#", icon: ChartPieIcon },
   { name: "LogOut", href: "#", icon: ArrowRightOnRectangleIcon },
 ];
 
-function classNames(...classes) {
+function classNames(...classes: string[]): string {
   return classes.filter(Boolean).join(" ");
 }
 
 export default function Dashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [currentSection, setCurrentSection] = useState("Dashboard"); // Estado de la sección activa
-  const [selectedRow, setSelectedRow] = useState(null); // Estado para la fila seleccionada
+  const [selectedRow, setSelectedRow] = useState<RowData | null>(null);
 
-  const handleNavigationClick = (section) => {
+  const handleNavigationClick = (section: string) => {
     setCurrentSection(section);
   };
 
-  const handleRowClick = (rowData) => {
-    setSelectedRow(rowData); // Actualizar la fila seleccionada
+  const handleRowClick = (rowData: RowData) => {
+    setSelectedRow(rowData);
   };
 
   return (
@@ -185,8 +185,7 @@ export default function Dashboard() {
                 )
               )}
               {/* Agrega otros componentes según la sección activa */}
-              {currentSection === "Dashboard" && <div>Dashboard Content</div>}
-              {currentSection === "Documents" && <div>Documents Content</div>}
+              {currentSection === "Dashboard" && <AnalitycsData />}
               {currentSection === "Reports" && <div>Reports Content</div>}
             </div>
           </main>

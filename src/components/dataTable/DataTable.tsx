@@ -6,6 +6,8 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import IcodcliDetail from "../../icodcliDetail/IcodcliDetail";
 
+console.log(generateData);
+
 const normalizeText = (text: string) => {
   return text
     .normalize("NFD")
@@ -21,8 +23,10 @@ const DataTable: React.FC = () => {
   const [selectedRow, setSelectedRow] = useState<any | null>(null); // Estado para la fila seleccionada
   const [showDetails, setShowDetails] = useState(false); // Estado para mostrar/ocultar detalles de la fila
 
+  // Añadir la columna para el campo 'colectivo'
   const columns = useMemo(
     () => [
+      { Header: "Colectivo", accessor: "colectivo" }, // Nueva columna para 'colectivo'
       { Header: "Fuente*", accessor: "fuente" },
       { Header: "ICODCLI", accessor: "icodcli" },
       { Header: "Correo", accessor: "correo" },
@@ -30,16 +34,20 @@ const DataTable: React.FC = () => {
       {
         Header: "Fecha / Hora",
         accessor: "horaFecha",
-        Cell: ({ value }: any) => format(value, "dd-MM-yyyy HH:mm"),
+        // Cambia la celda para que no se formatee, solo se muestra el objeto Date
+        Cell: ({ value }: any) => format(new Date(value), "dd-MM-yyyy HH:mm"),
+        // Definir un sortType para manejar fechas correctamente
+        sortType: (rowA: any, rowB: any) => {
+          return (
+            new Date(rowA.original.horaFecha).getTime() -
+            new Date(rowB.original.horaFecha).getTime()
+          );
+        },
       },
-      // Nueva columna "Clics" antes de "Estado"
       {
         Header: "Clics",
-        accessor: "clics", // Accedemos a la propiedad 'clics'
-        Cell: ({ value }: any) => {
-          // Mostramos el número de clics, es decir, la longitud del array de clics
-          return value ? value.length : 0; // Si no hay clics, mostramos 0
-        },
+        accessor: "clics",
+        Cell: ({ value }: any) => (value ? value.length : 0),
       },
       {
         Header: "ESTADO",
@@ -53,6 +61,7 @@ const DataTable: React.FC = () => {
               updatedData[row.index].estado = e.target.value;
               setData(updatedData);
             }}
+            onClick={(e) => e.stopPropagation()} // Evita que el clic se propague
           >
             <option value="Pendiente">Pendiente</option>
             <option value="Resuelto">Resuelto</option>
@@ -90,7 +99,7 @@ const DataTable: React.FC = () => {
     headerGroups,
     rows,
     prepareRow,
-    state: { sortBy, pageIndex, pageSize },
+    state: { pageIndex, pageSize },
     canPreviousPage,
     canNextPage,
     page,
@@ -113,69 +122,63 @@ const DataTable: React.FC = () => {
     setEndDate(null);
   };
 
-  // Manejar el clic en una fila de la tabla
   const handleRowClick = (row: any) => {
-    setSelectedRow(row); // Guarda la fila seleccionada
-    setShowDetails(true); // Muestra los detalles
+    setSelectedRow(row);
+    setShowDetails(true);
   };
 
-  // Volver a la vista de la tabla
   const handleBackToTable = () => {
-    setShowDetails(false); // Oculta los detalles
-    setSelectedRow(null); // Limpia la fila seleccionada
+    setShowDetails(false);
+    setSelectedRow(null);
   };
 
   if (showDetails && selectedRow) {
     return (
       <IcodcliDetail
-        clientDetails={selectedRow} // Pasar los datos al componente hijo
-        handleBackToTable={handleBackToTable} // Pasar la función de vuelta
+        clientDetails={selectedRow}
+        handleBackToTable={handleBackToTable}
       />
     );
   }
 
   return (
     <div className="p-6 rounded-lg shadow-lg">
-      <div className="mb-4">
-        <div className="flex items-center space-x-4">
-          <div>
-            <label>Fecha de inicio: </label>
-            <DatePicker
-              selected={startDate}
-              onChange={(date: Date) => setStartDate(date)}
-              dateFormat="yyyy-MM-dd"
-              className="px-4 py-2 border border-gray-300 rounded"
-              placeholderText="Selecciona una fecha"
-            />
-          </div>
-          <div>
-            <label>Fecha de fin: </label>
-            <DatePicker
-              selected={endDate}
-              onChange={(date: Date) => setEndDate(date)}
-              dateFormat="yyyy-MM-dd"
-              className="px-4 py-2 border border-gray-300 rounded"
-              placeholderText="Selecciona una fecha"
-            />
-          </div>
-          <button
-            onClick={clearDateFilters}
-            className="px-4 py-2 bg-red-500 text-white rounded disabled:bg-gray-400 mx-2"
-          >
-            Limpiar fechas
-          </button>
+      <div className="mb-4 flex items-center space-x-4">
+        <div>
+          <label>Fecha de inicio: </label>
+          <DatePicker
+            selected={startDate}
+            onChange={(date: Date) => setStartDate(date)}
+            dateFormat="yyyy-MM-dd"
+            className="px-4 py-2 border border-gray-300 rounded"
+            placeholderText="Selecciona una fecha"
+          />
         </div>
+        <div>
+          <label>Fecha de fin: </label>
+          <DatePicker
+            selected={endDate}
+            onChange={(date: Date) => setEndDate(date)}
+            dateFormat="yyyy-MM-dd"
+            className="px-4 py-2 border border-gray-300 rounded"
+            placeholderText="Selecciona una fecha"
+          />
+        </div>
+        <button
+          onClick={clearDateFilters}
+          className="px-4 py-2 bg-red-500 text-white rounded"
+        >
+          Limpiar fechas
+        </button>
       </div>
 
-      <div className="mb-4">
-        <input
-          type="text"
-          placeholder="Buscar..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="px-4 py-2 border border-gray-300 rounded w-full"
-        />
-      </div>
+      <input
+        type="text"
+        placeholder="Buscar..."
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+        className="px-4 py-2 border border-gray-300 rounded w-full mb-4"
+      />
 
       <table
         {...getTableProps()}
@@ -190,15 +193,11 @@ const DataTable: React.FC = () => {
                   className="px-4 py-2 border border-gray-300 cursor-pointer"
                 >
                   {column.render("Header")}
-                  {column.isSorted ? (
-                    column.isSortedDesc ? (
-                      <span className="ml-2 text-sm">↓</span>
-                    ) : (
-                      <span className="ml-2 text-sm">↑</span>
-                    )
-                  ) : (
-                    <span className="ml-2 text-sm">↕️</span>
-                  )}
+                  {column.isSorted
+                    ? column.isSortedDesc
+                      ? " ↓"
+                      : " ↑"
+                    : " ↕️"}
                 </th>
               ))}
             </tr>
@@ -210,15 +209,21 @@ const DataTable: React.FC = () => {
             return (
               <tr
                 {...row.getRowProps()}
-                className={
-                  index % 2 === 0 ? "bg-white" : "bg-gray-100 cursor-pointer"
-                }
-                onClick={() => handleRowClick(row.original)}
+                className={`${
+                  index % 2 === 0 ? "bg-white" : "bg-gray-100"
+                } hover:bg-gray-200`}
               >
                 {row.cells.map((cell) => (
                   <td
                     {...cell.getCellProps()}
-                    className="px-4 py-2 border border-gray-300 cursor-pointer"
+                    className={`px-4 py-2 border border-gray-300 ${
+                      cell.column.id !== "estado" ? "cursor-pointer" : ""
+                    }`}
+                    onClick={
+                      cell.column.id !== "estado"
+                        ? () => handleRowClick(row.original)
+                        : undefined
+                    }
                   >
                     {cell.render("Cell")}
                   </td>
@@ -232,35 +237,21 @@ const DataTable: React.FC = () => {
       <div className="mt-4 flex items-center justify-between">
         <div>
           <button
-            onClick={() => gotoPage(0)}
-            disabled={!canPreviousPage}
-            className="px-4 py-2 bg-red-500 text-white rounded disabled:bg-gray-400 mx-2"
-          >
-            {"<<"}
-          </button>
-          <button
             onClick={() => previousPage()}
             disabled={!canPreviousPage}
-            className="px-4 py-2 bg-red-500 text-white rounded disabled:bg-gray-400 mx-2"
+            className="px-4 py-2 bg-red-500 text-white rounded disabled:bg-gray-400"
           >
             {"<"}
           </button>
           <span className="px-4 py-2">
-            Página {pageIndex + 1} de {Math.ceil(rows.length / pageSize)}
+            Página {pageIndex + 1} de {rows.length / pageSize}
           </span>
           <button
             onClick={() => nextPage()}
             disabled={!canNextPage}
-            className="px-4 py-2 bg-red-500 text-white rounded disabled:bg-gray-400 mx-2"
+            className="px-4 py-2 bg-red-500 text-white rounded disabled:bg-gray-400"
           >
             {">"}
-          </button>
-          <button
-            onClick={() => gotoPage(Math.ceil(rows.length / pageSize) - 1)}
-            disabled={!canNextPage}
-            className="px-4 py-2 bg-red-500 text-white rounded disabled:bg-gray-400 mx-2"
-          >
-            {">>"}
           </button>
         </div>
 

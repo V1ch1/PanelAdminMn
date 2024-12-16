@@ -6,6 +6,10 @@ import {
   UserIcon,
   CheckIcon,
   CalendarIcon,
+  ArrowLeftIcon,
+  CommandLineIcon,
+  PresentationChartLineIcon,
+  ArrowTurnDownRightIcon,
 } from "@heroicons/react/20/solid";
 
 interface IcodcliDetailProps {
@@ -24,7 +28,7 @@ const IcodcliDetail: React.FC<IcodcliDetailProps> = ({
         onClick={handleBackToTable}
         className="flex items-center text-blue-500 mb-6 space-x-2 hover:text-blue-700"
       >
-        <UserIcon className="h-5 w-5" />
+        <ArrowLeftIcon className="h-5 w-5" />
         <span>Volver a la tabla</span>
       </button>
 
@@ -54,10 +58,19 @@ const IcodcliDetail: React.FC<IcodcliDetailProps> = ({
         </div>
 
         <div className="flex items-center space-x-4">
-          <CheckIcon className="h-6 w-6 text-gray-500" />
+          <ArrowTurnDownRightIcon className="h-6 w-6 text-gray-500" />
           <div>
             <p className="text-lg font-medium text-gray-700">
               <strong>ICODCLI:</strong> {clientDetails.icodcli}
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center space-x-4">
+          <CommandLineIcon className="h-6 w-6 text-gray-500" />
+          <div>
+            <p className="text-lg font-medium text-gray-700">
+              <strong>Colectivo:</strong> {clientDetails.colectivo}
             </p>
           </div>
         </div>
@@ -73,7 +86,7 @@ const IcodcliDetail: React.FC<IcodcliDetailProps> = ({
         </div>
 
         <div className="flex items-center space-x-4">
-          <CheckIcon className="h-6 w-6 text-gray-500" />
+          <PresentationChartLineIcon className="h-6 w-6 text-gray-500" />
           <div>
             <p className="text-lg font-medium text-gray-700">
               <strong>Estado:</strong> {clientDetails.estado}

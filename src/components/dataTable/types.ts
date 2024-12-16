@@ -5,6 +5,8 @@ export interface DataRow {
   asunto: string;
   horaFecha: Date;
   estado: string;
+  clics: string[];
+  colectivo: string;
 }
 
 export interface Column {
@@ -22,6 +24,14 @@ export interface ClientDetails {
   icodcli: string;
   correo: string;
   asunto: string;
-  horaFecha: string;
+  horaFecha: Date;
   estado: string;
+  clics: string[];
+  colectivo: string;
+}
+
+export interface RowData {
+  id: number;
+  name: string;
+  age: number;
 }
