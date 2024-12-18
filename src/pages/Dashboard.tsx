@@ -13,6 +13,7 @@ import {
   HomeIcon,
   XMarkIcon,
   ArrowRightOnRectangleIcon,
+  UserIcon,
 } from "@heroicons/react/24/outline";
 import Logo from "../../public/assets/logo-MN-25-peq.png";
 import DataTable from "../components/dataTable/DataTable";
@@ -23,6 +24,7 @@ const navigation = [
   { name: "Dashboard", href: "#", icon: HomeIcon },
   { name: "Datos", href: "#", icon: CircleStackIcon },
   { name: "Reports", href: "#", icon: ChartPieIcon },
+  { name: "Usuarios", href: "#", icon: UserIcon },
   { name: "LogOut", href: "#", icon: ArrowRightOnRectangleIcon },
 ];
 
@@ -188,6 +190,7 @@ export default function Dashboard() {
               {/* Agrega otros componentes según la sección activa */}
               {currentSection === "Dashboard" && <AnalitycsData />}
               {currentSection === "Reports" && <div>Reports Content</div>}
+              {currentSection === "Usuarios" && <div>Usuarios Content</div>}
             </div>
           </main>
         </div>

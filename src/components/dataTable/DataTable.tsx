@@ -150,7 +150,7 @@ const DataTable: React.FC = () => {
           <DatePicker
             selected={startDate}
             onChange={(date: Date) => setStartDate(date)}
-            dateFormat="yyyy-MM-dd"
+            dateFormat="dd-MM-yyyy h-mm"
             className="px-4 py-2 border border-gray-300 rounded"
             placeholderText="Selecciona una fecha"
           />
