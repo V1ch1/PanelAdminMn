@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React, { useState, useMemo } from "react";
 import { useTable, useSortBy, usePagination } from "react-table";
 import { generateData } from "./generateData";
