@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogBackdrop,
@@ -19,6 +19,7 @@ import Logo from "../../public/assets/logo-MN-25-peq.png";
 import DataTable from "../components/dataTable/DataTable";
 import AnalitycsData from "../components/dashboard/AnalitycsData";
 import { RowData } from "../components/dataTable/types";
+import { getEvents, Event } from "../services/apiService"; // Importar el servicio de API
 
 const navigation = [
   { name: "Dashboard", href: "#", icon: HomeIcon },
@@ -34,8 +35,30 @@ function classNames(...classes: string[]): string {
 
 export default function Dashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [currentSection, setCurrentSection] = useState("Dashboard"); // Estado de la sección activa
+  const [currentSection, setCurrentSection] = useState("Dashboard");
   const [selectedRow, setSelectedRow] = useState<RowData | null>(null);
+
+  // Estados para los datos de la API
+  const [events, setEvents] = useState<Event[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Llamada a la API al montar el componente
+  useEffect(() => {
+    const fetchEvents = async () => {
+      setLoading(true);
+      try {
+        const data = await getEvents(); // Llamada a la API
+        setEvents(data); // Guardamos los datos en el estado
+      } catch (err: any) {
+        setError(err.message); // Manejo de errores
+      } finally {
+        setLoading(false); // Finaliza el estado de carga
+      }
+    };
+
+    fetchEvents(); // Ejecutar la función
+  }, []);
 
   const handleNavigationClick = (section: string) => {
     setCurrentSection(section);
@@ -90,7 +113,7 @@ export default function Dashboard() {
                           <li key={item.name}>
                             <a
                               href="#"
-                              onClick={() => handleNavigationClick(item.name)} // Actualiza la sección activa
+                              onClick={() => handleNavigationClick(item.name)}
                               className={classNames(
                                 item.name === currentSection
                                   ? "bg-gray-50 text-[#0067c0]"
@@ -120,7 +143,7 @@ export default function Dashboard() {
           </div>
         </Dialog>
 
-        {/* Código para la vista lateral en dispositivos grandes */}
+        {/* Sidebar fijo en pantallas grandes */}
         <div className="hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:w-72 lg:flex-col">
           <div className="flex grow flex-col gap-y-5 overflow-y-auto border-r border-gray-200 bg-white px-6 pb-4">
             <div className="flex h-16 shrink-0 items-center">
@@ -134,7 +157,7 @@ export default function Dashboard() {
                       <li key={item.name}>
                         <a
                           href="#"
-                          onClick={() => handleNavigationClick(item.name)} // Actualiza la sección activa
+                          onClick={() => handleNavigationClick(item.name)}
                           className={classNames(
                             item.name === currentSection
                               ? "bg-gray-50 text-[#0067c0]"
@@ -176,21 +199,29 @@ export default function Dashboard() {
 
           <main className="py-10">
             <div className="px-4 sm:px-6 lg:px-8">
-              {/* Aquí cambiamos la vista según si hay una fila seleccionada */}
+              {/* Sección según la navegación */}
               {selectedRow ? (
                 <div>
                   <h2 className="text-2xl font-bold">Detalles de la Fila</h2>
                   <pre>{JSON.stringify(selectedRow, null, 2)}</pre>
                 </div>
               ) : (
-                currentSection === "Datos" && (
-                  <DataTable onRowClick={handleRowClick} />
-                )
+                <>
+                  {currentSection === "Datos" && (
+                    <DataTable
+                      events={events} // Pasa los eventos directamente desde data.events
+                      loading={loading}
+                      error={error}
+                      onRowClick={handleRowClick}
+                    />
+                  )}
+                  {currentSection === "Dashboard" && (
+                    <AnalitycsData events={events} /> // Pasar los eventos al componente de análisis
+                  )}
+                  {currentSection === "Reports" && <div>Reports Content</div>}
+                  {currentSection === "Usuarios" && <div>Usuarios Content</div>}
+                </>
               )}
-              {/* Agrega otros componentes según la sección activa */}
-              {currentSection === "Dashboard" && <AnalitycsData />}
-              {currentSection === "Reports" && <div>Reports Content</div>}
-              {currentSection === "Usuarios" && <div>Usuarios Content</div>}
             </div>
           </main>
         </div>

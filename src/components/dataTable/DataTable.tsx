@@ -1,13 +1,48 @@
-// @ts-nocheck
 import React, { useState, useMemo } from "react";
-import { useTable, useSortBy, usePagination } from "react-table";
-import { generateData } from "./generateData";
+import { AgGridReact } from "ag-grid-react";
 import { format } from "date-fns";
 import DatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";
-import IcodcliDetail from "../../icodcliDetail/IcodcliDetail";
 
-console.log(generateData);
+import "@ag-grid-community/styles/ag-grid.css"; // Estilos base de AG-Grid
+import "@ag-grid-community/styles/ag-theme-quartz.css";
+// Importar configuración de la grid
+import gridConfig from "../../styles/gridConfig";
+
+import {
+  ClientSideRowModelModule,
+  TextFilterModule,
+  NumberFilterModule,
+  DateFilterModule,
+  ModuleRegistry,
+} from "ag-grid-community";
+
+// Registra los módulos válidos
+ModuleRegistry.registerModules([
+  ClientSideRowModelModule,
+  TextFilterModule,
+  NumberFilterModule,
+  DateFilterModule,
+]);
+
+interface Event {
+  id: number;
+  icodcli: string;
+  colectivo: string;
+  asunto: string;
+  email: string;
+  fuente: string;
+  section: string;
+  created_at: string;
+  weight: number;
+  status: string;
+}
+
+interface DataTableProps {
+  events: { data: { events: Event[] } };
+  loading: boolean;
+  error: string | null;
+  onRowClick: (event: Event) => void;
+}
 
 const normalizeText = (text: string) => {
   return text
@@ -16,260 +51,234 @@ const normalizeText = (text: string) => {
     .toLowerCase();
 };
 
-const DataTable: React.FC = () => {
-  const [data, setData] = useState(generateData());
+const DataTable: React.FC<DataTableProps> = ({
+  events,
+  loading,
+  error,
+  onRowClick,
+}) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
-  const [selectedRow, setSelectedRow] = useState<any | null>(null); // Estado para la fila seleccionada
-  const [showDetails, setShowDetails] = useState(false); // Estado para mostrar/ocultar detalles de la fila
+  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
 
-  // Añadir la columna para el campo 'colectivo'
+  const validEvents = useMemo(() => {
+    return (events?.data?.events || []) as Event[];
+  }, [events]);
+
   const columns = useMemo(
     () => [
-      { Header: "Colectivo", accessor: "colectivo" }, // Nueva columna para 'colectivo'
-      { Header: "Fuente*", accessor: "fuente" },
-      { Header: "ICODCLI", accessor: "icodcli" },
-      { Header: "Correo", accessor: "correo" },
-      { Header: "Asunto", accessor: "asunto" },
       {
-        Header: "Fecha / Hora",
-        accessor: "horaFecha",
-        // Cambia la celda para que no se formatee, solo se muestra el objeto Date
-        Cell: ({ value }: any) => format(new Date(value), "dd-MM-yyyy HH:mm"),
-        // Definir un sortType para manejar fechas correctamente
-        sortType: (rowA: any, rowB: any) => {
-          return (
-            new Date(rowA.original.horaFecha).getTime() -
-            new Date(rowB.original.horaFecha).getTime()
-          );
+        headerName: "ID",
+        field: "id",
+        filter: "agNumberColumnFilter",
+        minWidth: 100,
+        flex: 0.5,
+      },
+      {
+        headerName: "IcodCli",
+        field: "icodcli",
+        filter: "agTextColumnFilter",
+        minWidth: 120,
+        flex: 1,
+      },
+      {
+        headerName: "Colectivo",
+        field: "colectivo",
+        filter: "agTextColumnFilter",
+        minWidth: 150,
+        flex: 1,
+      },
+      {
+        headerName: "Asunto",
+        field: "asunto",
+        filter: "agTextColumnFilter",
+        minWidth: 200,
+        flex: 2,
+      },
+      {
+        headerName: "Correo",
+        field: "email",
+        filter: "agTextColumnFilter",
+        minWidth: 180,
+        flex: 1.5,
+      },
+      {
+        headerName: "Fuente",
+        field: "fuente",
+        filter: "agTextColumnFilter",
+        minWidth: 120,
+        flex: 1,
+      },
+      {
+        headerName: "Sección",
+        field: "section",
+        filter: "agTextColumnFilter",
+        minWidth: 120,
+        flex: 1,
+      },
+      {
+        headerName: "Fecha / Hora",
+        field: "created_at",
+        filter: "agDateColumnFilter",
+        valueFormatter: (params: { value: string }) =>
+          format(new Date(params.value), "dd-MM-yyyy HH:mm"),
+        minWidth: 160,
+        flex: 1.2,
+      },
+      {
+        headerName: "Peso",
+        field: "weight",
+        filter: "agNumberColumnFilter",
+        minWidth: 100,
+        flex: 0.5,
+      },
+      {
+        headerName: "Estado",
+        field: "status",
+        editable: true,
+        cellEditor: "agSelectCellEditor",
+        cellEditorParams: {
+          values: ["Pendiente", "Resuelto"],
         },
+        minWidth: 120,
+        flex: 0.8,
       },
       {
-        Header: "Clics",
-        accessor: "clics",
-        Cell: ({ value }: any) => (value ? value.length : 0),
-      },
-      {
-        Header: "ESTADO",
-        accessor: "estado",
-        Cell: ({ value, row }: any) => (
-          <select
-            className="px-2 py-1 border border-gray-300 rounded"
-            value={value}
-            onChange={(e) => {
-              const updatedData = [...data];
-              updatedData[row.index].estado = e.target.value;
-              setData(updatedData);
+        headerName: "Acciones",
+        cellRenderer: (params: { data: Event }) => (
+          <button
+            className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm transition-colors"
+            onClick={(e) => {
+              e.stopPropagation();
+              setSelectedEvent(params.data);
             }}
-            onClick={(e) => e.stopPropagation()} // Evita que el clic se propague
           >
-            <option value="Pendiente">Pendiente</option>
-            <option value="Resuelto">Resuelto</option>
-          </select>
+            + Info
+          </button>
         ),
+        minWidth: 100,
+        flex: 0.5,
+        sortable: false,
+        filter: false,
+        suppressMovable: true,
       },
     ],
-    [data]
+    []
   );
 
-  const filteredData = useMemo(
-    () =>
-      data.filter((row) =>
-        Object.values(row).some((value) =>
-          normalizeText(String(value)).includes(normalizeText(searchTerm))
-        )
-      ),
-    [data, searchTerm]
-  );
-
-  const filteredByDate = useMemo(
-    () =>
-      filteredData.filter((row) => {
-        const rowDate = new Date(row.horaFecha);
-        if (startDate && rowDate < startDate) return false;
-        if (endDate && rowDate > endDate) return false;
-        return true;
-      }),
-    [filteredData, startDate, endDate]
-  );
-
-  const {
-    getTableProps,
-    getTableBodyProps,
-    headerGroups,
-    rows,
-    prepareRow,
-    state: { pageIndex, pageSize },
-    canPreviousPage,
-    canNextPage,
-    page,
-    gotoPage,
-    nextPage,
-    previousPage,
-    setPageSize,
-  } = useTable(
-    {
-      columns,
-      data: filteredByDate,
-      initialState: { pageIndex: 0 },
-    },
-    useSortBy,
-    usePagination
-  );
-
-  const clearDateFilters = () => {
-    setStartDate(null);
-    setEndDate(null);
-  };
-
-  const handleRowClick = (row: any) => {
-    setSelectedRow(row);
-    setShowDetails(true);
-  };
-
-  const handleBackToTable = () => {
-    setShowDetails(false);
-    setSelectedRow(null);
-  };
-
-  if (showDetails && selectedRow) {
-    return (
-      <IcodcliDetail
-        clientDetails={selectedRow}
-        handleBackToTable={handleBackToTable}
-      />
+  const filteredData = useMemo(() => {
+    return validEvents.filter((row) =>
+      Object.values(row).some((value) =>
+        normalizeText(String(value)).includes(normalizeText(searchTerm))
+      )
     );
-  }
+  }, [validEvents, searchTerm]);
+
+  const filteredByDate = useMemo(() => {
+    return filteredData.filter((row) => {
+      const rowDate = new Date(row.created_at);
+      if (startDate && rowDate < startDate) return false;
+      if (endDate && rowDate > endDate) return false;
+      return true;
+    });
+  }, [filteredData, startDate, endDate]);
+
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error}</div>;
 
   return (
-    <div className="p-6 rounded-lg shadow-lg">
-      <div className="mb-4 flex items-center space-x-4">
-        <div>
-          <label>Fecha de inicio: </label>
-          <DatePicker
-            selected={startDate}
-            onChange={(date: Date) => setStartDate(date)}
-            dateFormat="dd-MM-yyyy h-mm"
-            className="px-4 py-2 border border-gray-300 rounded"
-            placeholderText="Selecciona una fecha"
-          />
-        </div>
-        <div>
-          <label>Fecha de fin: </label>
-          <DatePicker
-            selected={endDate}
-            onChange={(date: Date) => setEndDate(date)}
-            dateFormat="yyyy-MM-dd"
-            className="px-4 py-2 border border-gray-300 rounded"
-            placeholderText="Selecciona una fecha"
-          />
-        </div>
-        <button
-          onClick={clearDateFilters}
-          className="px-4 py-2 bg-red-500 text-white rounded"
-        >
-          Limpiar fechas
-        </button>
-      </div>
-
-      <input
-        type="text"
-        placeholder="Buscar..."
-        value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
-        className="px-4 py-2 border border-gray-300 rounded w-full mb-4"
-      />
-
-      <table
-        {...getTableProps()}
-        className="min-w-full border-collapse border border-gray-200"
-      >
-        <thead className="bg-gray-800 text-white">
-          {headerGroups.map((headerGroup) => (
-            <tr {...headerGroup.getHeaderGroupProps()}>
-              {headerGroup.headers.map((column) => (
-                <th
-                  {...column.getHeaderProps(column.getSortByToggleProps())}
-                  className="px-4 py-2 border border-gray-300 cursor-pointer"
-                >
-                  {column.render("Header")}
-                  {column.isSorted
-                    ? column.isSortedDesc
-                      ? " ↓"
-                      : " ↑"
-                    : " ↕️"}
-                </th>
-              ))}
-            </tr>
-          ))}
-        </thead>
-        <tbody {...getTableBodyProps()}>
-          {page.map((row, index) => {
-            prepareRow(row);
-            return (
-              <tr
-                {...row.getRowProps()}
-                className={`${
-                  index % 2 === 0 ? "bg-white" : "bg-gray-100"
-                } hover:bg-gray-200`}
-              >
-                {row.cells.map((cell) => (
-                  <td
-                    {...cell.getCellProps()}
-                    className={`px-4 py-2 border border-gray-300 ${
-                      cell.column.id !== "estado" ? "cursor-pointer" : ""
-                    }`}
-                    onClick={
-                      cell.column.id !== "estado"
-                        ? () => handleRowClick(row.original)
-                        : undefined
-                    }
-                  >
-                    {cell.render("Cell")}
-                  </td>
-                ))}
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-
-      <div className="mt-4 flex items-center justify-between">
-        <div>
+    <div className="space-y-6">
+      {/* Filtros */}
+      <div className="bg-white p-4 rounded-lg shadow space-y-4">
+        <div className="flex flex-wrap gap-4 items-center">
+          <div className="flex items-center gap-2">
+            <label className="text-sm font-medium text-gray-700">Inicio:</label>
+            <DatePicker
+              selected={startDate}
+              onChange={(date: Date) => setStartDate(date)}
+              dateFormat="dd-MM-yyyy"
+              className="px-3 py-2 border border-gray-300 rounded-md text-sm"
+              placeholderText="Fecha inicial"
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <label className="text-sm font-medium text-gray-700">Fin:</label>
+            <DatePicker
+              selected={endDate}
+              onChange={(date: Date) => setEndDate(date)}
+              dateFormat="dd-MM-yyyy"
+              className="px-3 py-2 border border-gray-300 rounded-md text-sm"
+              placeholderText="Fecha final"
+            />
+          </div>
           <button
-            onClick={() => previousPage()}
-            disabled={!canPreviousPage}
-            className="px-4 py-2 bg-red-500 text-white rounded disabled:bg-gray-400"
+            onClick={() => {
+              setStartDate(null);
+              setEndDate(null);
+            }}
+            className="px-3 py-2 bg-red-500 hover:bg-red-600 text-white rounded-md text-sm"
           >
-            {"<"}
-          </button>
-          <span className="px-4 py-2">
-            Página {pageIndex + 1} de {rows.length / pageSize}
-          </span>
-          <button
-            onClick={() => nextPage()}
-            disabled={!canNextPage}
-            className="px-4 py-2 bg-red-500 text-white rounded disabled:bg-gray-400"
-          >
-            {">"}
+            Limpiar fechas
           </button>
         </div>
 
-        <div>
-          <select
-            value={pageSize}
-            onChange={(e) => setPageSize(Number(e.target.value))}
-            className="px-2 py-1 border border-gray-300 rounded"
+        <input
+          type="text"
+          placeholder="Buscar en todos los campos..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+        />
+      </div>
+
+      {/* Tabla */}
+      <div className="bg-white rounded-lg shadow">
+        <div className="overflow-hidden">
+          <div
+            className="ag-theme-quartz"
+            style={{
+              height: "600px",
+              width: "100%",
+            }}
           >
-            {[10, 20, 50].map((size) => (
-              <option key={size} value={size}>
-                Mostrar {size}
-              </option>
-            ))}
-          </select>
+            <AgGridReact
+              columnDefs={columns}
+              rowData={filteredByDate}
+              {...gridConfig}
+              onRowClicked={(e) => onRowClick(e.data)}
+            />
+          </div>
         </div>
       </div>
+
+      {/* Modal */}
+      {selectedEvent && (
+        <div className="fixed inset-0 bg-gray-500 bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg w-96">
+            <h2 className="text-xl font-semibold">Detalles del Evento</h2>
+            <p>
+              <strong>ID:</strong> {selectedEvent.id}
+            </p>
+            <p>
+              <strong>Asunto:</strong> {selectedEvent.asunto}
+            </p>
+            <p>
+              <strong>Correo:</strong> {selectedEvent.email}
+            </p>
+            <p>
+              <strong>Fecha:</strong>{" "}
+              {format(new Date(selectedEvent.created_at), "dd-MM-yyyy HH:mm")}
+            </p>
+            <button
+              className="mt-4 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded"
+              onClick={() => setSelectedEvent(null)}
+            >
+              Cerrar
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
