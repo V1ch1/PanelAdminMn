@@ -1,44 +1,42 @@
 import React, { createContext, useState, useEffect, ReactNode } from "react";
-import { login, logout, User } from "./auth"; // Importa las funciones y el tipo de usuario
+import { login as apiLogin, logout as apiLogout, User } from "./auth"; // Simulación de API para login/logout
 
 interface AuthContextType {
   user: User | null;
   login: (username: string, password: string) => boolean;
   logout: () => void;
-  loading: boolean; // Estado de carga para saber si ya se ha recuperado el usuario
+  loading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState<boolean>(true); // Agregamos el estado de carga
+  const [loading, setLoading] = useState<boolean>(true);
 
-  // Al cargar la página, intentamos obtener la información del usuario desde localStorage
+  // Al cargar la aplicación, recuperamos el usuario de localStorage si existe
   useEffect(() => {
     const savedUser = localStorage.getItem("user");
     if (savedUser) {
       setUser(JSON.parse(savedUser));
     }
-    setLoading(false); // Cuando se termina de cargar, ya no estamos en "carga"
+    setLoading(false);
   }, []);
 
-  // Función para manejar el login
   const handleLogin = (username: string, password: string): boolean => {
-    const isLoggedIn = login(username, password);
+    const isLoggedIn = apiLogin(username, password);
     if (isLoggedIn) {
-      const user: User = { username, role: "admin" }; // Tipo 'User' con roles específicos
-      localStorage.setItem("user", JSON.stringify(user)); // Guardamos el usuario en LocalStorage
-      setUser(user); // Establecemos el usuario en el estado
+      const user: User = { username, role: "admin" }; // Ejemplo de roles
+      localStorage.setItem("user", JSON.stringify(user));
+      setUser(user);
     }
     return isLoggedIn;
   };
 
-  // Función para manejar el logout
   const handleLogout = (): void => {
-    logout();
-    localStorage.removeItem("user"); // Borramos el usuario de LocalStorage
-    setUser(null); // Restablecemos el estado
+    apiLogout(); // Llamada a la API de logout (opcional)
+    localStorage.removeItem("user");
+    setUser(null);
   };
 
   return (

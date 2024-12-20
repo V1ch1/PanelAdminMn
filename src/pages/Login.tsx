@@ -29,7 +29,11 @@ const Login = () => {
         className="bg-white p-8 rounded shadow-md w-80"
       >
         <div className="flex items-center justify-center h-20 shrink-0 items-center">
-          <img alt="Logo Mn" src={Logo} className="h-12 w-auto" />
+          <img
+            alt="Logo Mn"
+            src={Logo}
+            className="h-12 w-auto object-contain"
+          />
         </div>{" "}
         {error && (
           <div className="text-red-500 mb-4 text-center text-sm">{error}</div>
