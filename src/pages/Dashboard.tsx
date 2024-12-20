@@ -20,7 +20,7 @@ import { useAuth } from "../utils/AuthContext";
 type NavigationItem = {
   name: string;
   href: string;
-  icon: (props: React.ComponentProps<"svg">) => JSX.Element;
+  icon: React.ElementType;
 };
 
 const navigation: NavigationItem[] = [
