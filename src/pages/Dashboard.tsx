@@ -42,8 +42,6 @@ export default function Dashboard() {
   const [events, setEvents] = useState<ApiEvent[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [intervalTime, setIntervalTime] = useState<number>(30000); // Intervalo predeterminado en ms
-  const [customInterval, setCustomInterval] = useState<number>(30); // Intervalo personalizado en segundos
 
   useEffect(() => {
     const fetchEvents = async () => {
@@ -65,30 +63,15 @@ export default function Dashboard() {
 
     fetchEvents(); // Llamada inicial
 
-    // Configuración del intervalo
+    // Comentado para deshabilitar el intervalo
+    /*
     const intervalId = setInterval(() => {
-      const currentHour = new Date().getHours();
-
-      // Cambiar el intervalo según el tramo horario
-      if (currentHour >= 9 && currentHour < 18) {
-        setIntervalTime(15000); // Cada 15 segundos en horario laboral
-      } else {
-        setIntervalTime(3600000); // Cada hora fuera de horario laboral
-      }
-
       fetchEvents();
-    }, intervalTime);
+    }, 30000); // Cada 30 segundos
 
     return () => clearInterval(intervalId); // Limpia el intervalo al desmontar
-  }, [intervalTime]);
-
-  const handleIntervalChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newInterval = Number(e.target.value);
-    if (newInterval > 0) {
-      setCustomInterval(newInterval);
-      setIntervalTime(newInterval * 1000); // Actualiza el intervalo en ms
-    }
-  };
+    */
+  }, []);
 
   const handleNavigationClick = (item: NavigationItem) => {
     if (item.name === "LogOut") {
@@ -127,21 +110,6 @@ export default function Dashboard() {
 
   return (
     <div>
-      {/* Configuración del intervalo */}
-      <div className="p-4 bg-gray-100 border-b flex items-center justify-between">
-        <span className="text-sm font-semibold">Intervalo (segundos):</span>
-        <input
-          type="number"
-          min={5}
-          value={customInterval}
-          onChange={handleIntervalChange}
-          className="border rounded px-2 py-1 w-16 text-center"
-        />
-        <span className="text-sm text-gray-500 ml-4">
-          Intervalo actual: {intervalTime / 1000} segundos
-        </span>
-      </div>
-
       {/* Botón de hamburguesa para abrir el menú en móvil */}
       <div className="lg:hidden flex justify-between items-center p-4 border-b">
         <img alt="Logo MN" src={Logo} className="h-8 w-auto object-contain" />
