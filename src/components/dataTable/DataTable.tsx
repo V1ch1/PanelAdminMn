@@ -115,16 +115,16 @@ const DataTable: React.FC<DataTableProps> = ({
   ]);
 
   const columns = [
-    { name: "ID", width: "20px" },
-    { name: "Fecha y Hora", width: "70px" },
-    { name: "Correo", width: "120px" },
-    { name: "IcodCli", width: "60px" },
-    { name: "Colectivo", width: "70px" },
-    { name: "Asunto", width: "200px" },
-    { name: "Fuente", width: "70px" },
-    { name: "Sección", width: "70px" },
-    { name: "Estado", width: "70px" },
-    { name: "Acciones", width: "60px" },
+    { name: "ID" },
+    { name: "Fecha y Hora" },
+    { name: "Correo" },
+    { name: "IcodCli" },
+    { name: "Colectivo" },
+    { name: "Asunto" },
+    { name: "Fuente" },
+    { name: "Sección" },
+    { name: "Estado" },
+    { name: "Acciones" },
   ];
 
   return (
