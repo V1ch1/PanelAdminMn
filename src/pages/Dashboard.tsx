@@ -4,7 +4,6 @@ import { useNavigate, Routes, Route, useLocation } from "react-router-dom";
 import { Dialog, DialogBackdrop, DialogPanel } from "@headlessui/react";
 import {
   Bars3Icon,
-  ChartPieIcon,
   HomeIcon,
   XMarkIcon,
   ArrowRightOnRectangleIcon,
@@ -12,7 +11,6 @@ import {
 } from "@heroicons/react/24/outline";
 import Logo from "../../public/assets/logo-MN-25-peq.png";
 import DataTable from "../components/dataTable/DataTable";
-import AnalitycsData from "../components/dashboard/AnalitycsData";
 import UserManagement from "../components/users/UserManagement";
 import { getEvents, Event as ApiEvent } from "../services/apiService";
 import { useAuth } from "../utils/AuthContext";
@@ -25,7 +23,7 @@ type NavigationItem = {
 
 const navigation: NavigationItem[] = [
   { name: "Dashboard", href: "/dashboard", icon: HomeIcon },
-  { name: "Analítica", href: "/dashboard/analytics", icon: ChartPieIcon },
+  // { name: "Analítica", href: "/dashboard/analytics", icon: ChartPieIcon },
   { name: "Usuarios", href: "/dashboard/users", icon: UserIcon },
   { name: "LogOut", href: "#", icon: ArrowRightOnRectangleIcon },
 ];
@@ -170,10 +168,10 @@ export default function Dashboard() {
                 <DataTable events={events} loading={loading} error={error} />
               }
             />
-            <Route
+            {/* <Route
               path="/analytics"
               element={<AnalitycsData events={events} />}
-            />
+            /> */}
             <Route path="/users" element={<UserManagement />} />
           </Routes>
         </main>
