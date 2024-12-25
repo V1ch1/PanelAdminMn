@@ -20,6 +20,17 @@ const normalizeText = (text: string) => {
     .toLowerCase();
 };
 
+const SkeletonLoader = () => (
+  <div className="animate-pulse">
+    <div className="h-6 bg-gray-300 rounded mb-4 w-1/4"></div>
+    <div className="space-y-2">
+      {Array.from({ length: 5 }).map((_, index) => (
+        <div key={index} className="h-8 bg-gray-200 rounded w-full"></div>
+      ))}
+    </div>
+  </div>
+);
+
 const DataTable: React.FC<DataTableProps> = ({
   events,
   loading,
@@ -52,7 +63,7 @@ const DataTable: React.FC<DataTableProps> = ({
     );
   }, [tableData, searchTerm]);
 
-  if (loading) return <div>Cargando datos...</div>;
+  if (loading) return <SkeletonLoader />;
   if (error) return <div>Error: {error}</div>;
 
   const openPopup = (event: Event) => {
@@ -135,6 +146,19 @@ const DataTable: React.FC<DataTableProps> = ({
           table: "table-auto w-full text-sm",
           header: "bg-gray-100 text-gray-700 font-bold",
           row: "hover:bg-gray-50",
+        }}
+        language={{
+          search: {
+            placeholder: "Buscar eventos...", // Texto personalizado aquí
+          },
+          pagination: {
+            previous: "Anterior",
+            next: "Siguiente",
+            showing: "Mostrando",
+            results: "resultados",
+            to: "a",
+            of: "de",
+          },
         }}
       />
 
