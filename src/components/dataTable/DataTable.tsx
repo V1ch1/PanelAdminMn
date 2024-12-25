@@ -147,9 +147,21 @@ const DataTable: React.FC<DataTableProps> = ({
           header: "bg-gray-100 text-gray-700 font-bold",
           row: "hover:bg-gray-50",
         }}
+        style={{
+          table: {
+            tableLayout: "auto", // Ajuste automático del ancho de columnas
+            width: "100%", // La tabla ocupa todo el espacio disponible
+          },
+          th: {
+            whiteSpace: "nowrap", // Evita que el texto en el encabezado se envuelva
+          },
+          td: {
+            whiteSpace: "nowrap", // Evita que el texto en las celdas se envuelva
+          },
+        }}
         language={{
           search: {
-            placeholder: "Buscar eventos...", // Texto personalizado aquí
+            placeholder: "Buscar eventos...",
           },
           pagination: {
             previous: "Anterior",
