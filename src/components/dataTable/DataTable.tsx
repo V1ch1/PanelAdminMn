@@ -41,6 +41,11 @@ const DataTable: React.FC<DataTableProps> = ({
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [tableData, setTableData] = useState<Event[]>(events);
+  const [activeTab, setActiveTab] = useState<"pendientes" | "resueltos">(
+    "pendientes"
+  );
+
+  console.log(tableData, "esto es tableData");
 
   // Configurar un intervalo para actualizar cada 30 segundos (comentado)
   // useEffect(() => {
@@ -56,12 +61,18 @@ const DataTable: React.FC<DataTableProps> = ({
   }, [events]);
 
   const filteredEvents = useMemo(() => {
-    return tableData.filter((event) =>
-      Object.values(event).some((value) =>
-        normalizeText(String(value)).includes(normalizeText(searchTerm))
+    return tableData
+      .filter(
+        (event) =>
+          (activeTab === "pendientes" && event.status === "pendiente") ||
+          (activeTab === "resueltos" && event.status === "resuelto")
       )
-    );
-  }, [tableData, searchTerm]);
+      .filter((event) =>
+        Object.values(event).some((value) =>
+          normalizeText(String(value)).includes(normalizeText(searchTerm))
+        )
+      );
+  }, [tableData, searchTerm, activeTab]);
 
   if (loading) return <SkeletonLoader />;
   if (error) return <div>Error: {error}</div>;
@@ -92,7 +103,7 @@ const DataTable: React.FC<DataTableProps> = ({
   };
 
   const tableRows = filteredEvents.map((event) => [
-    event.id,
+    // event.id,
     new Date(event.created_at).toLocaleString("es-ES", {
       dateStyle: "short",
       timeStyle: "short",
@@ -115,7 +126,7 @@ const DataTable: React.FC<DataTableProps> = ({
   ]);
 
   const columns = [
-    { name: "ID" },
+    // { name: "ID" },
     { name: "Fecha y Hora" },
     { name: "Correo" },
     { name: "IcodCli" },
@@ -127,8 +138,38 @@ const DataTable: React.FC<DataTableProps> = ({
     { name: "Acciones" },
   ];
 
+  console.log(tableData, "esto es tableData");
+
   return (
-    <div className="space-y-6">
+    <div className="">
+      {/* Tabs para seleccionar Pendientes o Resueltos */}
+      <div
+        className={`flex justify-center items-center border-b py-4 ${
+          activeTab === "pendientes" ? "bg-green-100" : "bg-red-100"
+        }`}
+      >
+        <button
+          onClick={() => setActiveTab("pendientes")}
+          className={`py-2 px-4 font-semibold transition-all ${
+            activeTab === "pendientes"
+              ? "border-b-2 border-green-700 text-green-700"
+              : "text-black"
+          }`}
+        >
+          Leads Pendientes
+        </button>
+        <button
+          onClick={() => setActiveTab("resueltos")}
+          className={`py-2 px-4 font-semibold transition-all ${
+            activeTab === "resueltos"
+              ? "border-b-2 border-red-700 text-red-700"
+              : "text-black"
+          }`}
+        >
+          Leads Resueltos
+        </button>
+      </div>
+
       <Grid
         data={tableRows}
         columns={columns}
