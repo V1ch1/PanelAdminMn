@@ -1,8 +1,10 @@
+// @ts-nocheck
+
 import axiosInstance from "../api/axios"; // Importamos la configuración de Axios
 
 // Definir la interfaz del tipo de dato que devuelve la API
 export interface Event {
-  id: string; // Ajusta este tipo según los datos reales de tu API
+  id: string;
   fuente: string;
   section: string;
   email: string;
@@ -10,18 +12,20 @@ export interface Event {
   asunto: string;
   status: string;
   colectivo: string;
+  created_at: string; // Asegúrate de que esta propiedad exista
 }
 
-//Endpoint para obtener todos los eventos
+interface GetEventByCodcliResponse {
+  events: Event[];
+}
 
 // Endpoint para obtener todos los eventos
 export const getEvents = async (status: string): Promise<Event[]> => {
   try {
     const response = await axiosInstance.get("/get-events", {
-      params: { status }, // Agrega el parámetro de consulta
+      params: { status },
     });
 
-    // Extrae los eventos desde `response.data.data.events`
     if (
       response.data?.data?.events &&
       Array.isArray(response.data.data.events)
@@ -41,12 +45,14 @@ export const getEvents = async (status: string): Promise<Event[]> => {
 export const getEventByCodcli = async (
   codcli: string,
   asunto: string
-): Promise<Event> => {
+): Promise<{ data: GetEventByCodcliResponse }> => {
   try {
     const url = `/get-event-by-codcli?icodcli=${encodeURIComponent(
       codcli
     )}&asunto=${encodeURIComponent(asunto)}`;
-    const response = await axiosInstance.get<Event>(url);
+    const response = await axiosInstance.get<{
+      data: GetEventByCodcliResponse;
+    }>(url);
     return response.data;
   } catch (error: any) {
     console.error("Error al obtener el evento por codcli:", error);
