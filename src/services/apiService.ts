@@ -43,15 +43,13 @@ export const getEventByCodcli = async (
   asunto: string
 ): Promise<Event> => {
   try {
-    // Construcción correcta de la URL con ambos parámetros codificados
     const url = `/get-event-by-codcli?icodcli=${encodeURIComponent(
       codcli
     )}&asunto=${encodeURIComponent(asunto)}`;
-
     const response = await axiosInstance.get<Event>(url);
     return response.data;
   } catch (error: any) {
-    console.error("Error al obtener el evento por codcli:", error); // Imprime el error completo
+    console.error("Error al obtener el evento por codcli:", error);
     throw new Error(
       error.response?.data?.message || "Error al obtener el evento por codcli"
     );
@@ -60,11 +58,12 @@ export const getEventByCodcli = async (
 
 // Endpoint para actualizar un evento
 export const updateEvent = async (
-  id: string,
-  status: string
+  icodcli: string,
+  status: string,
+  asunto: string
 ): Promise<void> => {
   try {
-    await axiosInstance.post("/update", { id, status });
+    await axiosInstance.post("/update", { icodcli, status, asunto });
   } catch (error: any) {
     console.error("Error al actualizar el evento:", error.message);
     throw new Error(

@@ -31,7 +31,6 @@ const DataTable: React.FC = () => {
   const [asunto, setSelectAsunto] = useState<string>("");
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [selectedIcodCli, setSelectedIcodCli] = useState<string | null>(null);
-
   const [activeTab, setActiveTab] = useState<"pendiente" | "gestionado">(
     "pendiente"
   );
@@ -66,14 +65,15 @@ const DataTable: React.FC = () => {
   }, [events, searchTerm]);
 
   const openPopup = (icodCli: string, asunto: string) => {
-    setSelectedIcodCli(icodCli); // Pasa solo el IcodCli
+    setSelectedIcodCli(icodCli);
     setSelectAsunto(asunto);
     setIsOpen(true);
   };
 
   const closePopup = () => {
     setIsOpen(false);
-    setSelectAsunto(asunto);
+    fetchEvents(activeTab); // Actualizar la tabla después de cerrar el popup
+    setSelectAsunto("");
     setSelectedIcodCli(null);
   };
 
@@ -93,7 +93,7 @@ const DataTable: React.FC = () => {
       "button",
       {
         className: "py-2 px-4 bg-blue-600 text-white rounded hover:bg-blue-700",
-        onClick: () => openPopup(event.icodcli), // Pasa solo el IcodCli
+        onClick: () => openPopup(event.icodcli, event.asunto),
       },
       "Ver más"
     ),
@@ -146,7 +146,19 @@ const DataTable: React.FC = () => {
           columns={columns}
           sort={true}
           search={true}
-          pagination={{ enabled: true, limit: 10 }}
+          pagination={{ enabled: true, limit: 50 }}
+          language={{
+            search: {
+              placeholder: "Buscar...",
+            },
+            pagination: {
+              previous: "Anterior",
+              next: "Siguiente",
+              showing: "Mostrando",
+              results: () => "resultados",
+            },
+            noRecordsFound: "No se encontraron Leads en este momento",
+          }}
           className={{
             table: "table-auto w-full text-sm",
             header: "bg-gray-100 text-gray-700 font-bold",
@@ -158,9 +170,10 @@ const DataTable: React.FC = () => {
       {selectedIcodCli && (
         <PopUpComponent
           isOpen={isOpen}
-          icodCli={selectedIcodCli} // Pasa solo el IcodCli
+          icodCli={selectedIcodCli}
           asunto={asunto}
           closePopup={closePopup}
+          fetchEvents={() => fetchEvents(activeTab)} // Pasar la función para actualizar la tabla
         />
       )}
     </div>
