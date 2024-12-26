@@ -1,17 +1,9 @@
-// @ts-nocheck
-import React, { useEffect, useMemo, useState, Fragment } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Grid } from "gridjs-react";
 import { h } from "gridjs";
 import "gridjs/dist/theme/mermaid.css";
-import { Dialog, Transition } from "@headlessui/react";
-import { Event } from "../../services/apiService";
-
-interface DataTableProps {
-  events: Event[];
-  loading: boolean;
-  error: string | null;
-  fetchEvents: () => void; // Función para actualizar los datos
-}
+import PopUpComponent from "./PopUpComponent";
+import { getEvents, Event } from "../../services/apiService";
 
 const normalizeText = (text: string) => {
   return text
@@ -31,102 +23,80 @@ const SkeletonLoader = () => (
   </div>
 );
 
-const DataTable: React.FC<DataTableProps> = ({
-  events,
-  loading,
-  error,
-  fetchEvents,
-}) => {
+const DataTable: React.FC = () => {
+  const [events, setEvents] = useState<Event[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [isOpen, setIsOpen] = useState<boolean>(false);
-  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
-  const [tableData, setTableData] = useState<Event[]>(events);
-  const [activeTab, setActiveTab] = useState<"pendientes" | "resueltos">(
-    "pendientes"
+  const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<"pendiente" | "gestionado">(
+    "pendiente"
   );
 
-  console.log(tableData, "esto es tableData");
-
-  // Configurar un intervalo para actualizar cada 30 segundos (comentado)
-  // useEffect(() => {
-  //   const interval = setInterval(() => {
-  //     fetchEvents();
-  //   }, 30000); // 30 segundos
-
-  //   return () => clearInterval(interval); // Limpiar el intervalo al desmontar el componente
-  // }, [fetchEvents]);
+  const fetchEvents = async (status: "pendiente" | "gestionado") => {
+    setLoading(true);
+    setError(null);
+    try {
+      const events = await getEvents(status); // Llamada al servicio
+      console.log("Eventos recibidos:", events); // Verifica los datos
+      setEvents(events); // Asigna directamente los eventos
+    } catch (err: unknown) {
+      console.error("Error al obtener eventos:", err); // Depuración adicional
+      setError(err instanceof Error ? err.message : "Error desconocido");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    setTableData(events);
-  }, [events]);
+    fetchEvents(activeTab);
+  }, [activeTab]);
 
   const filteredEvents = useMemo(() => {
-    return tableData
-      .filter(
-        (event) =>
-          (activeTab === "pendientes" && event.status === "pendiente") ||
-          (activeTab === "resueltos" && event.status === "resuelto")
+    return events.filter((event) =>
+      Object.values(event).some((value) =>
+        normalizeText(String(value)).includes(normalizeText(searchTerm))
       )
-      .filter((event) =>
-        Object.values(event).some((value) =>
-          normalizeText(String(value)).includes(normalizeText(searchTerm))
-        )
-      );
-  }, [tableData, searchTerm, activeTab]);
+    );
+  }, [events, searchTerm]);
 
-  if (loading) return <SkeletonLoader />;
-  if (error) return <div>Error: {error}</div>;
-
-  const openPopup = (event: Event) => {
-    setSelectedEvent(event);
+  const openPopup = (eventId: string) => {
+    setSelectedEventId(eventId);
     setIsOpen(true);
   };
 
   const closePopup = () => {
     setIsOpen(false);
-    setSelectedEvent(null);
+    setSelectedEventId(null);
   };
 
-  const toggleStatus = () => {
-    if (selectedEvent) {
-      const updatedStatus =
-        selectedEvent.status === "pendiente" ? "resuelto" : "pendiente";
-      setSelectedEvent({ ...selectedEvent, status: updatedStatus });
-      setTableData((prevData) =>
-        prevData.map((event) =>
-          event.id === selectedEvent.id
-            ? { ...event, status: updatedStatus }
-            : event
-        )
-      );
-    }
-  };
+  if (loading) return <SkeletonLoader />;
+  if (error) return <div>Error: {error}</div>;
 
   const tableRows = filteredEvents.map((event) => [
-    // event.id,
     new Date(event.created_at).toLocaleString("es-ES", {
       dateStyle: "short",
       timeStyle: "short",
-    }),
-    event.email,
-    event.icodcli,
-    event.colectivo || "N/A",
-    event.asunto || "N/A",
-    event.fuente || "N/A",
-    event.section,
-    event.status,
+    }), // Fecha y hora formateadas
+    event.email || "N/A", // Correo
+    event.icodcli || "N/A", // Código del cliente
+    event.colectivo || "N/A", // Colectivo
+    event.asunto || "N/A", // Asunto
+    event.fuente || "N/A", // Fuente
+    event.section || "N/A", // Sección
+    event.status || "N/A", // Estado
     h(
       "button",
       {
         className: "py-2 px-4 bg-blue-600 text-white rounded hover:bg-blue-700",
-        onClick: () => openPopup(event),
+        onClick: () => openPopup(event.icodcli), // Abre el popup con `icodcli`
       },
       "Ver más"
     ),
   ]);
 
   const columns = [
-    // { name: "ID" },
     { name: "Fecha y Hora" },
     { name: "Correo" },
     { name: "IcodCli" },
@@ -138,20 +108,13 @@ const DataTable: React.FC<DataTableProps> = ({
     { name: "Acciones" },
   ];
 
-  console.log(tableData, "esto es tableData");
-
   return (
-    <div className="">
-      {/* Tabs para seleccionar Pendientes o Resueltos */}
-      <div
-        className={`flex justify-center items-center border-b py-4 ${
-          activeTab === "pendientes" ? "bg-green-100" : "bg-red-100"
-        }`}
-      >
+    <div>
+      <div className="flex justify-center items-center border-b py-4">
         <button
-          onClick={() => setActiveTab("pendientes")}
-          className={`py-2 px-4 font-semibold transition-all ${
-            activeTab === "pendientes"
+          onClick={() => setActiveTab("pendiente")}
+          className={`py-2 px-4 font-semibold ${
+            activeTab === "pendiente"
               ? "border-b-2 border-green-700 text-green-700"
               : "text-black"
           }`}
@@ -159,9 +122,9 @@ const DataTable: React.FC<DataTableProps> = ({
           Leads Pendientes
         </button>
         <button
-          onClick={() => setActiveTab("resueltos")}
-          className={`py-2 px-4 font-semibold transition-all ${
-            activeTab === "resueltos"
+          onClick={() => setActiveTab("gestionado")}
+          className={`py-2 px-4 font-semibold ${
+            activeTab === "gestionado"
               ? "border-b-2 border-red-700 text-red-700"
               : "text-black"
           }`}
@@ -188,130 +151,13 @@ const DataTable: React.FC<DataTableProps> = ({
           header: "bg-gray-100 text-gray-700 font-bold",
           row: "hover:bg-gray-50",
         }}
-        style={{
-          table: {
-            tableLayout: "auto", // Ajuste automático del ancho de columnas
-            width: "100%", // La tabla ocupa todo el espacio disponible
-          },
-          th: {
-            whiteSpace: "nowrap", // Evita que el texto en el encabezado se envuelva
-          },
-          td: {
-            whiteSpace: "nowrap", // Evita que el texto en las celdas se envuelva
-          },
-        }}
-        language={{
-          search: {
-            placeholder: "Buscar eventos...",
-          },
-          pagination: {
-            previous: "Anterior",
-            next: "Siguiente",
-            showing: "Mostrando",
-            results: "resultados",
-            to: "a",
-            of: "de",
-          },
-        }}
       />
 
-      <Transition appear show={isOpen} as={Fragment}>
-        <Dialog as="div" className="relative z-10" onClose={closePopup}>
-          <Transition.Child
-            as={Fragment}
-            enter="ease-out duration-300"
-            enterFrom="opacity-0 scale-95"
-            enterTo="opacity-100 scale-100"
-            leave="ease-in duration-200"
-            leaveFrom="opacity-100 scale-100"
-            leaveTo="opacity-0 scale-95"
-          >
-            <div className="fixed inset-0 bg-black bg-opacity-25" />
-          </Transition.Child>
-
-          <div className="fixed inset-0 overflow-y-auto">
-            <div className="flex min-h-full items-center justify-center p-4 text-center">
-              <Transition.Child
-                as={Fragment}
-                enter="ease-out duration-300"
-                enterFrom="opacity-0 scale-95"
-                enterTo="opacity-100 scale-100"
-                leave="ease-in duration-200"
-                leaveFrom="opacity-100 scale-100"
-                leaveTo="opacity-0 scale-95"
-              >
-                <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all sm:w-3/4 md:w-1/2 lg:w-1/3">
-                  <div className="flex justify-between items-center">
-                    <Dialog.Title
-                      as="h3"
-                      className="text-lg font-medium leading-6 text-gray-900"
-                    >
-                      Información del Evento
-                    </Dialog.Title>
-                    <button
-                      type="button"
-                      className="text-gray-500 hover:text-gray-700"
-                      onClick={closePopup}
-                    >
-                      ✖
-                    </button>
-                  </div>
-                  {selectedEvent && (
-                    <div className="mt-4 space-y-2">
-                      <p>
-                        <strong>ID:</strong> {selectedEvent.id}
-                      </p>
-                      <p>
-                        <strong>Correo:</strong> {selectedEvent.email}
-                      </p>
-                      <p>
-                        <strong>Fecha de Creación:</strong>{" "}
-                        {new Date(selectedEvent.created_at).toLocaleString(
-                          "es-ES",
-                          {
-                            dateStyle: "short",
-                            timeStyle: "short",
-                          }
-                        )}
-                      </p>
-                      <p>
-                        <strong>IcodCli:</strong> {selectedEvent.icodcli}
-                      </p>
-                      <p>
-                        <strong>Colectivo:</strong>{" "}
-                        {selectedEvent.colectivo || "N/A"}
-                      </p>
-                      <p>
-                        <strong>Asunto:</strong> {selectedEvent.asunto || "N/A"}
-                      </p>
-                      <p>
-                        <strong>Fuente:</strong> {selectedEvent.fuente || "N/A"}
-                      </p>
-                      <p>
-                        <strong>Sección:</strong> {selectedEvent.section}
-                      </p>
-                      <p>
-                        <strong>Estado:</strong> {selectedEvent.status}
-                      </p>
-                      <div className="flex justify-end mt-6">
-                        <button
-                          className="py-2 px-4 bg-green-600 text-white rounded hover:bg-green-700"
-                          onClick={toggleStatus}
-                        >
-                          Marcar como{" "}
-                          {selectedEvent.status === "pendiente"
-                            ? "resuelto"
-                            : "pendiente"}
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </Dialog.Panel>
-              </Transition.Child>
-            </div>
-          </div>
-        </Dialog>
-      </Transition>
+      <PopUpComponent
+        isOpen={isOpen}
+        eventId={selectedEventId}
+        closePopup={closePopup}
+      />
     </div>
   );
 };

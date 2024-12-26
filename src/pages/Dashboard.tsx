@@ -1,7 +1,6 @@
 // @ts-nocheck
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate, Routes, Route, useLocation } from "react-router-dom";
-import { Dialog, DialogBackdrop, DialogPanel } from "@headlessui/react";
 import {
   Bars3Icon,
   HomeIcon,
@@ -9,10 +8,10 @@ import {
   ArrowRightOnRectangleIcon,
   UserIcon,
 } from "@heroicons/react/24/outline";
+import { Dialog, DialogBackdrop, DialogPanel } from "@headlessui/react";
 import Logo from "../../public/assets/logo-MN-25-peq.png";
 import DataTable from "../components/dataTable/DataTable";
 import UserManagement from "../components/users/UserManagement";
-import { getEvents, Event as ApiEvent } from "../services/apiService";
 import { useAuth } from "../utils/AuthContext";
 
 type NavigationItem = {
@@ -23,7 +22,6 @@ type NavigationItem = {
 
 const navigation: NavigationItem[] = [
   { name: "Dashboard", href: "/dashboard", icon: HomeIcon },
-  // { name: "Analítica", href: "/dashboard/analytics", icon: ChartPieIcon },
   { name: "Usuarios", href: "/dashboard/users", icon: UserIcon },
   { name: "LogOut", href: "#", icon: ArrowRightOnRectangleIcon },
 ];
@@ -37,39 +35,6 @@ export default function Dashboard() {
   const location = useLocation();
   const { logout } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [events, setEvents] = useState<ApiEvent[]>([]);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const fetchEvents = async () => {
-      setLoading(true);
-      try {
-        const data = await getEvents();
-        if (data?.data?.events && Array.isArray(data.data.events)) {
-          setEvents(data.data.events);
-        } else {
-          console.error("La API devolvió un formato inesperado:", data);
-          setEvents([]);
-        }
-      } catch (err: unknown) {
-        setError(err instanceof Error ? err.message : "Error desconocido");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchEvents(); // Llamada inicial
-
-    // Comentado para deshabilitar el intervalo
-    /*
-    const intervalId = setInterval(() => {
-      fetchEvents();
-    }, 30000); // Cada 30 segundos
-
-    return () => clearInterval(intervalId); // Limpia el intervalo al desmontar
-    */
-  }, []);
 
   const handleNavigationClick = (item: NavigationItem) => {
     if (item.name === "LogOut") {
@@ -162,16 +127,7 @@ export default function Dashboard() {
       <div className="lg:pl-64">
         <main className="py-10 px-4">
           <Routes>
-            <Route
-              path="/"
-              element={
-                <DataTable events={events} loading={loading} error={error} />
-              }
-            />
-            {/* <Route
-              path="/analytics"
-              element={<AnalitycsData events={events} />}
-            /> */}
+            <Route path="/" element={<DataTable />} />
             <Route path="/users" element={<UserManagement />} />
           </Routes>
         </main>
