@@ -28,8 +28,10 @@ const DataTable: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState<string>("");
+  const [asunto, setSelectAsunto] = useState<string>("");
   const [isOpen, setIsOpen] = useState<boolean>(false);
-  const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
+  const [selectedIcodCli, setSelectedIcodCli] = useState<string | null>(null);
+
   const [activeTab, setActiveTab] = useState<"pendiente" | "gestionado">(
     "pendiente"
   );
@@ -38,12 +40,14 @@ const DataTable: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const events = await getEvents(status); // Llamada al servicio
-      console.log("Eventos recibidos:", events); // Verifica los datos
-      setEvents(events); // Asigna directamente los eventos
+      const events = await getEvents(status);
+      setEvents(events);
     } catch (err: unknown) {
-      console.error("Error al obtener eventos:", err); // Depuración adicional
-      setError(err instanceof Error ? err.message : "Error desconocido");
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Error desconocido al cargar los datos."
+      );
     } finally {
       setLoading(false);
     }
@@ -61,51 +65,50 @@ const DataTable: React.FC = () => {
     );
   }, [events, searchTerm]);
 
-  const openPopup = (eventId: string) => {
-    setSelectedEventId(eventId);
+  const openPopup = (icodCli: string, asunto: string) => {
+    setSelectedIcodCli(icodCli); // Pasa solo el IcodCli
+    setSelectAsunto(asunto);
     setIsOpen(true);
   };
 
   const closePopup = () => {
     setIsOpen(false);
-    setSelectedEventId(null);
+    setSelectAsunto(asunto);
+    setSelectedIcodCli(null);
   };
-
-  if (loading) return <SkeletonLoader />;
-  if (error) return <div>Error: {error}</div>;
 
   const tableRows = filteredEvents.map((event) => [
     new Date(event.created_at).toLocaleString("es-ES", {
       dateStyle: "short",
       timeStyle: "short",
-    }), // Fecha y hora formateadas
-    event.email || "N/A", // Correo
-    event.icodcli || "N/A", // Código del cliente
-    event.colectivo || "N/A", // Colectivo
-    event.asunto || "N/A", // Asunto
-    event.fuente || "N/A", // Fuente
-    event.section || "N/A", // Sección
-    event.status || "N/A", // Estado
+    }),
+    event.email || "N/A",
+    event.icodcli || "N/A",
+    event.colectivo || "N/A",
+    event.asunto || "N/A",
+    event.fuente || "N/A",
+    event.section || "N/A",
+    event.status || "N/A",
     h(
       "button",
       {
         className: "py-2 px-4 bg-blue-600 text-white rounded hover:bg-blue-700",
-        onClick: () => openPopup(event.icodcli), // Abre el popup con `icodcli`
+        onClick: () => openPopup(event.icodcli), // Pasa solo el IcodCli
       },
       "Ver más"
     ),
   ]);
 
   const columns = [
-    { name: "Fecha y Hora" },
-    { name: "Correo" },
-    { name: "IcodCli" },
-    { name: "Colectivo" },
-    { name: "Asunto" },
-    { name: "Fuente" },
-    { name: "Sección" },
-    { name: "Estado" },
-    { name: "Acciones" },
+    "Fecha y Hora",
+    "Correo",
+    "IcodCli",
+    "Colectivo",
+    "Asunto",
+    "Fuente",
+    "Sección",
+    "Estado",
+    "Acciones",
   ];
 
   return (
@@ -133,31 +136,33 @@ const DataTable: React.FC = () => {
         </button>
       </div>
 
-      <Grid
-        data={tableRows}
-        columns={columns}
-        sort={true}
-        resizable={true}
-        search={{
-          enabled: true,
-          placeholder: "Buscar...",
-        }}
-        pagination={{
-          enabled: true,
-          limit: 50,
-        }}
-        className={{
-          table: "table-auto w-full text-sm",
-          header: "bg-gray-100 text-gray-700 font-bold",
-          row: "hover:bg-gray-50",
-        }}
-      />
+      {loading ? (
+        <SkeletonLoader />
+      ) : error ? (
+        <div className="text-red-500">{error}</div>
+      ) : (
+        <Grid
+          data={tableRows}
+          columns={columns}
+          sort={true}
+          search={true}
+          pagination={{ enabled: true, limit: 10 }}
+          className={{
+            table: "table-auto w-full text-sm",
+            header: "bg-gray-100 text-gray-700 font-bold",
+            row: "hover:bg-gray-50",
+          }}
+        />
+      )}
 
-      <PopUpComponent
-        isOpen={isOpen}
-        eventId={selectedEventId}
-        closePopup={closePopup}
-      />
+      {selectedIcodCli && (
+        <PopUpComponent
+          isOpen={isOpen}
+          icodCli={selectedIcodCli} // Pasa solo el IcodCli
+          asunto={asunto}
+          closePopup={closePopup}
+        />
+      )}
     </div>
   );
 };

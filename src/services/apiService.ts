@@ -21,8 +21,6 @@ export const getEvents = async (status: string): Promise<Event[]> => {
       params: { status }, // Agrega el parámetro de consulta
     });
 
-    console.log("Respuesta de la API:", response); // Verificar estructura de la respuesta
-
     // Extrae los eventos desde `response.data.data.events`
     if (
       response.data?.data?.events &&
@@ -40,16 +38,20 @@ export const getEvents = async (status: string): Promise<Event[]> => {
   }
 };
 
-// Endpoint para obtener un evento por codcli
-export const getEventByCodcli = async (codcli: string): Promise<Event> => {
+export const getEventByCodcli = async (
+  codcli: string,
+  asunto: string
+): Promise<Event> => {
   try {
-    // Aquí ya no incluimos `/dev` porque está en la baseURL
-    const response = await axiosInstance.get<Event>(
-      `/get-event-by-codcli?codcli=${encodeURIComponent(codcli)}`
-    );
+    // Construcción correcta de la URL con ambos parámetros codificados
+    const url = `/get-event-by-codcli?icodcli=${encodeURIComponent(
+      codcli
+    )}&asunto=${encodeURIComponent(asunto)}`;
+
+    const response = await axiosInstance.get<Event>(url);
     return response.data;
   } catch (error: any) {
-    console.error("Error al obtener el evento por codcli:", error.message);
+    console.error("Error al obtener el evento por codcli:", error); // Imprime el error completo
     throw new Error(
       error.response?.data?.message || "Error al obtener el evento por codcli"
     );

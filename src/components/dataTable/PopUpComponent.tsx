@@ -1,45 +1,53 @@
-// PopUpComponent.tsx
 import React, { useEffect, useState } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 import { Fragment } from "react";
-import { Event } from "../../services/apiService";
-import { getEventByCodcli, updateEvent } from "../../services/apiService";
-import { CheckIcon } from "@heroicons/react/20/solid";
+import { Event, getEventByCodcli } from "../../services/apiService";
+import { updateEvent } from "../../services/apiService";
 
 interface PopUpComponentProps {
   isOpen: boolean;
-  eventId: string | null;
+  icodCli: string | null;
+  asunto: string | null;
   closePopup: () => void;
 }
-
 const PopUpComponent: React.FC<PopUpComponentProps> = ({
   isOpen,
-  eventId,
+  icodCli,
+  asunto,
   closePopup,
 }) => {
   const [eventDetails, setEventDetails] = useState<Event | null>(null);
-  const [loading, setLoading] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [buttonLoading, setButtonLoading] = useState<boolean>(false);
 
   useEffect(() => {
     const fetchEventDetails = async () => {
-      if (eventId) {
-        setLoading(true);
-        setError(null);
-        try {
-          const data = await getEventByCodcli(eventId);
-          setEventDetails(data);
-        } catch (err: any) {
-          setError(err.message || "Error al cargar los detalles del evento");
-        } finally {
-          setLoading(false);
-        }
+      if (!icodCli || !asunto) {
+        setError("Faltan datos para recuperar el evento.");
+        setLoading(false);
+        return;
+      }
+
+      setLoading(true);
+      setError(null);
+      try {
+        const data = await getEventByCodcli(icodCli, asunto);
+        console.log("Datos del evento:", data);
+        setEventDetails(data);
+      } catch (err: any) {
+        console.error("Error al obtener los detalles:", err); // Imprime el error completo
+        setError(
+          err.response?.data?.message ||
+            "Error al cargar los detalles del evento."
+        );
+      } finally {
+        setLoading(false);
       }
     };
 
-    fetchEventDetails();
-  }, [eventId]);
+    if (isOpen && icodCli && asunto) fetchEventDetails(); // Condición más robusta
+  }, [isOpen, icodCli, asunto]);
 
   const handleStatusChange = async () => {
     if (!eventDetails) return;
@@ -51,122 +59,61 @@ const PopUpComponent: React.FC<PopUpComponentProps> = ({
       setButtonLoading(true);
       await updateEvent(eventDetails.id, updatedStatus);
       setEventDetails({ ...eventDetails, status: updatedStatus });
+      alert("Estado actualizado con éxito.");
     } catch (error: any) {
-      console.error("Error al actualizar el estado del evento:", error);
-      alert("No se pudo actualizar el estado del evento.");
+      console.error("Error al actualizar el estado:", error);
+      alert(
+        "Error al actualizar el estado: " +
+          (error.response?.data?.message || error.message)
+      );
     } finally {
       setButtonLoading(false);
     }
   };
 
+  if (!eventDetails && !loading) return null;
+
   return (
     <Transition appear show={isOpen} as={Fragment}>
       <Dialog as="div" className="relative z-10" onClose={closePopup}>
-        <Transition.Child
-          as={Fragment}
-          enter="ease-out duration-300"
-          enterFrom="opacity-0 scale-95"
-          enterTo="opacity-100 scale-100"
-          leave="ease-in duration-200"
-          leaveFrom="opacity-100 scale-100"
-          leaveTo="opacity-0 scale-95"
-        >
-          <div className="fixed inset-0 bg-black bg-opacity-25" />
-        </Transition.Child>
-
+        <div className="fixed inset-0 bg-black bg-opacity-25" />
         <div className="fixed inset-0 overflow-y-auto">
-          <div className="flex min-h-full items-center justify-center p-4 text-center">
-            <Transition.Child
-              as={Fragment}
-              enter="ease-out duration-300"
-              enterFrom="opacity-0 scale-95"
-              enterTo="opacity-100 scale-100"
-              leave="ease-in duration-200"
-              leaveFrom="opacity-100 scale-100"
-              leaveTo="opacity-0 scale-95"
-            >
-              <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all sm:w-3/4 md:w-1/2 lg:w-1/3">
-                <div className="flex justify-between items-center">
-                  <Dialog.Title
-                    as="h3"
-                    className="text-lg font-medium leading-6 text-gray-900"
-                  >
-                    Información del Evento
-                  </Dialog.Title>
-                  <button
-                    type="button"
-                    className="text-gray-500 hover:text-gray-700"
-                    onClick={closePopup}
-                  >
-                    ✖
-                  </button>
-                </div>
-
-                {loading ? (
-                  <div className="mt-4 text-gray-500">Cargando...</div>
-                ) : error ? (
-                  <div className="mt-4 text-red-500">{error}</div>
-                ) : eventDetails ? (
+          <div className="flex items-center justify-center min-h-screen p-4 text-center">
+            <Dialog.Panel className="bg-white rounded-lg shadow-lg p-6 max-w-md w-full">
+              <div className="flex justify-between items-center">
+                <h3 className="text-lg font-medium text-gray-900">
+                  Detalles del Evento
+                </h3>
+                <button
+                  type="button"
+                  className="text-gray-500 hover:text-gray-700"
+                  onClick={closePopup}
+                >
+                  ✖
+                </button>
+              </div>
+              {loading ? (
+                <div className="mt-4 text-gray-500">Cargando...</div>
+              ) : error ? (
+                <div className="mt-4 text-red-500">{error}</div>
+              ) : (
+                eventDetails && (
                   <div className="mt-4 space-y-4">
-                    <div className="space-y-2">
-                      <p>
-                        <strong>IcodCli:</strong> {eventDetails.icodcli}
-                      </p>
-                      <p>
-                        <strong>Correo:</strong> {eventDetails.email}
-                      </p>
-                      <p>
-                        <strong>Colectivo:</strong>{" "}
-                        {eventDetails.colectivo || "N/A"}
-                      </p>
-                      <p>
-                        <strong>Asunto:</strong> {eventDetails.asunto || "N/A"}
-                      </p>
-                    </div>
-
-                    <div className="flow-root">
-                      <ul role="list" className="-mb-8">
-                        <li>
-                          <div className="relative pb-8">
-                            <div className="relative flex space-x-3">
-                              <div>
-                                <span className="bg-green-500 flex h-8 w-8 items-center justify-center rounded-full ring-8 ring-white">
-                                  <CheckIcon
-                                    className="h-5 w-5 text-white"
-                                    aria-hidden="true"
-                                  />
-                                </span>
-                              </div>
-                              <div className="min-w-0 flex-1 pt-1.5 flex justify-between space-x-4">
-                                <div>
-                                  <p className="text-sm text-gray-500">
-                                    <strong>Fecha:</strong>{" "}
-                                    {new Date(
-                                      eventDetails.created_at
-                                    ).toLocaleString("es-ES", {
-                                      dateStyle: "short",
-                                      timeStyle: "short",
-                                    })}
-                                  </p>
-                                  <p className="text-sm text-gray-500">
-                                    <strong>Fuente:</strong>{" "}
-                                    {eventDetails.fuente || "N/A"}
-                                  </p>
-                                  <p className="text-sm text-gray-500">
-                                    <strong>Sección:</strong>{" "}
-                                    {eventDetails.section}
-                                  </p>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        </li>
-                      </ul>
-                    </div>
-
+                    <p>
+                      <strong>ID:</strong> {eventDetails.id}
+                    </p>
+                    <p>
+                      <strong>IcodCli:</strong> {eventDetails.icodcli || "N/A"}
+                    </p>
+                    <p>
+                      <strong>Correo:</strong> {eventDetails.email || "N/A"}
+                    </p>
+                    <p>
+                      <strong>Estado:</strong> {eventDetails.status}
+                    </p>
                     <div className="flex justify-end mt-6">
                       <button
-                        className={`py-2 px-4 text-white rounded hover:opacity-90 ${
+                        className={`py-2 px-4 text-white rounded ${
                           eventDetails.status === "pendiente"
                             ? "bg-green-600 hover:bg-green-700"
                             : "bg-red-600 hover:bg-red-700"
@@ -182,13 +129,9 @@ const PopUpComponent: React.FC<PopUpComponentProps> = ({
                       </button>
                     </div>
                   </div>
-                ) : (
-                  <div className="mt-4 text-gray-500">
-                    No hay detalles disponibles.
-                  </div>
-                )}
-              </Dialog.Panel>
-            </Transition.Child>
+                )
+              )}
+            </Dialog.Panel>
           </div>
         </div>
       </Dialog>
