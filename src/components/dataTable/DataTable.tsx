@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React, { useEffect, useMemo, useState } from "react";
 import { Grid } from "gridjs-react";
 import { h } from "gridjs";
@@ -28,7 +27,6 @@ const DataTable: React.FC = () => {
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [searchTerm, setSearchTerm] = useState<string>("");
   const [asunto, setSelectAsunto] = useState<string>("");
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [selectedIcodCli, setSelectedIcodCli] = useState<string | null>(null);
@@ -57,14 +55,6 @@ const DataTable: React.FC = () => {
     fetchEvents(activeTab);
   }, [activeTab]);
 
-  const filteredEvents = useMemo(() => {
-    return events.filter((event) =>
-      Object.values(event).some((value) =>
-        normalizeText(String(value)).includes(normalizeText(searchTerm))
-      )
-    );
-  }, [events, searchTerm]);
-
   const openPopup = (icodCli: string, asunto: string) => {
     setSelectedIcodCli(icodCli);
     setSelectAsunto(asunto);
@@ -78,7 +68,7 @@ const DataTable: React.FC = () => {
     setSelectedIcodCli(null);
   };
 
-  const tableRows = filteredEvents.map((event) => [
+  const tableRows = events.map((event) => [
     new Date(event.created_at).toLocaleString("es-ES", {
       dateStyle: "short",
       timeStyle: "short",
@@ -114,7 +104,9 @@ const DataTable: React.FC = () => {
 
   return (
     <div>
-      <div className="flex justify-center items-center border-b py-4">
+      {/* Botones Leads */}
+      <div className="flex flex-col items-center md:flex-row md:justify-center space-y-4 md:space-y-0 md:space-x-4 border-b py-4">
+        {/* Leads Buttons */}
         <button
           onClick={() => setActiveTab("pendiente")}
           className={`py-2 px-4 font-semibold ${
@@ -135,8 +127,17 @@ const DataTable: React.FC = () => {
         >
           Leads Resueltos
         </button>
+
+        {/* Botón Refrescar */}
+        <button
+          onClick={() => fetchEvents(activeTab)}
+          className="py-2 px-4 bg-blue-600 text-white rounded hover:bg-blue-700 md:ml-4"
+        >
+          Refrescar
+        </button>
       </div>
 
+      {/* Tabla */}
       {loading ? (
         <SkeletonLoader />
       ) : error ? (
@@ -168,6 +169,7 @@ const DataTable: React.FC = () => {
         />
       )}
 
+      {/* Popup */}
       {selectedIcodCli && (
         <PopUpComponent
           isOpen={isOpen}

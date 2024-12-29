@@ -6,6 +6,8 @@ import { Fragment } from "react";
 import { Event, getEventByCodcli } from "../../services/apiService";
 import { updateEvent } from "../../services/apiService";
 import { formatDate } from "../../utils/formatDate";
+import { XMarkIcon } from "@heroicons/react/24/solid";
+import { ClipboardIcon } from "@heroicons/react/24/outline";
 
 interface PopUpComponentProps {
   isOpen: boolean;
@@ -121,20 +123,20 @@ const PopUpComponent: React.FC<PopUpComponentProps> = ({
         <div className="fixed inset-0 overflow-y-auto">
           <div className="flex items-center justify-center min-h-screen p-4 text-center">
             <Dialog.Panel className="bg-white rounded-lg shadow-lg p-6 max-w-md w-full text-left">
-              <div className="flex justify-between items-center">
-                <h3 className="text-lg font-medium align text-gray-900">
+              <div className="relative ">
+                <h3 className="text-2xl font-medium text-center text-gray-900 mb-10">
                   Detalles del Evento
                 </h3>
                 <button
                   type="button"
-                  className="text-black hover:text-gray-700"
+                  className="absolute top-0 right-0 text-gray-500 hover:text-gray-700"
                   onClick={closePopup}
                 >
-                  ✖
+                  <XMarkIcon className="h-6 w-6" />
                 </button>
               </div>
               {loading ? (
-                <div className="flex justify-center items-center mt-4">
+                <div className="flex justify-center items-center mt-4 border-t pt-2">
                   <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-gray-500"></div>
                 </div>
               ) : error ? (
@@ -142,15 +144,44 @@ const PopUpComponent: React.FC<PopUpComponentProps> = ({
               ) : (
                 eventDetails && (
                   <div className="mt-4 space-y-4">
-                    <p>
-                      <strong>IcodCli:</strong> {icodCli || "N/A"}
-                    </p>
+                    {/* Campo IcodCli */}
+                    <div className="flex items-center">
+                      <p className="mr-4">
+                        <strong>IcodCli:</strong> {icodCli || "N/A"}
+                      </p>
+                      {icodCli && (
+                        <button
+                          onClick={() => navigator.clipboard.writeText(icodCli)}
+                          className="flex items-center text-blue-500 hover:text-blue-700 text-sm"
+                        >
+                          <ClipboardIcon className="h-5 w-5 mr-1" />
+                          Copiar
+                        </button>
+                      )}
+                    </div>
+
                     <p>
                       <strong>Asunto:</strong> {asunto || "N/A"}
                     </p>
-                    <p>
-                      <strong>Correo:</strong> {eventDetails[0].email || "N/A"}
-                    </p>
+                    <div className="flex items-center">
+                      <p className="mr-4">
+                        <strong>Correo:</strong>{" "}
+                        {eventDetails?.[0]?.email || "N/A"}
+                      </p>
+                      {eventDetails?.[0]?.email && (
+                        <button
+                          onClick={() =>
+                            navigator.clipboard.writeText(
+                              eventDetails[0].email || ""
+                            )
+                          }
+                          className="flex items-center text-blue-500 hover:text-blue-700 text-sm"
+                        >
+                          <ClipboardIcon className="h-5 w-5 mr-1" />
+                          Copiar
+                        </button>
+                      )}
+                    </div>
                     {eventDetails.map((event, index) => (
                       <div key={index} className="border-t pt-2">
                         <p>
@@ -166,7 +197,7 @@ const PopUpComponent: React.FC<PopUpComponentProps> = ({
                     ))}
                     <div className="flex justify-end mt-6">
                       <button
-                        className={`py-2 px-4 text-white rounded ${
+                        className={`py-2 px-4 mt-8 text-white rounded ${
                           eventDetails[0].status === "pendiente"
                             ? "bg-green-600 hover:bg-green-700"
                             : "bg-red-600 hover:bg-red-700"
@@ -177,8 +208,8 @@ const PopUpComponent: React.FC<PopUpComponentProps> = ({
                         {buttonLoading
                           ? "Actualizando..."
                           : eventDetails[0].status === "pendiente"
-                          ? "Marcar como Resuelto"
-                          : "Marcar como Pendiente"}
+                          ? "Marcar como gestionado"
+                          : "Marcar como pendiente"}
                       </button>
                     </div>
                   </div>
