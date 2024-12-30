@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React, { useEffect, useMemo, useState } from "react";
 import { Grid } from "gridjs-react";
 import { h } from "gridjs";

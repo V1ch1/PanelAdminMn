@@ -22,7 +22,7 @@ type NavigationItem = {
 
 const navigation: NavigationItem[] = [
   { name: "Dashboard", href: "/dashboard", icon: HomeIcon },
-  { name: "Usuarios", href: "/dashboard/users", icon: UserIcon },
+  // { name: "Usuarios", href: "/dashboard/users", icon: UserIcon },
   { name: "LogOut", href: "#", icon: ArrowRightOnRectangleIcon },
 ];
 
@@ -128,7 +128,7 @@ export default function Dashboard() {
         <main className="py-10 px-4">
           <Routes>
             <Route path="/" element={<DataTable />} />
-            <Route path="/users" element={<UserManagement />} />
+            {/* <Route path="/users" element={<UserManagement />} /> */}
           </Routes>
         </main>
       </div>
