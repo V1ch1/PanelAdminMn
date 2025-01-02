@@ -7,12 +7,14 @@ import {
   XMarkIcon,
   ArrowRightOnRectangleIcon,
   UserIcon,
+  DocumentChartBarIcon,
 } from "@heroicons/react/24/outline";
 import { Dialog, DialogBackdrop, DialogPanel } from "@headlessui/react";
 import Logo from "../../public/assets/logo-MN-25-peq.png";
 import DataTable from "../components/dataTable/DataTable";
 import UserManagement from "../components/users/UserManagement";
 import { useAuth } from "../utils/AuthContext";
+import Informes from "../components/informes/Informes";
 
 type NavigationItem = {
   name: string;
@@ -22,7 +24,12 @@ type NavigationItem = {
 
 const navigation: NavigationItem[] = [
   { name: "Dashboard", href: "/dashboard", icon: HomeIcon },
-  // { name: "Usuarios", href: "/dashboard/users", icon: UserIcon },
+  { name: "Usuarios", href: "/dashboard/users", icon: UserIcon },
+  {
+    name: "Informes",
+    href: "/dashboard/informes",
+    icon: DocumentChartBarIcon,
+  },
   { name: "LogOut", href: "#", icon: ArrowRightOnRectangleIcon },
 ];
 
@@ -128,7 +135,8 @@ export default function Dashboard() {
         <main className="py-10 px-4">
           <Routes>
             <Route path="/" element={<DataTable />} />
-            {/* <Route path="/users" element={<UserManagement />} /> */}
+            <Route path="/users" element={<UserManagement />} />
+            <Route path="/informes" element={<Informes />} />
           </Routes>
         </main>
       </div>
