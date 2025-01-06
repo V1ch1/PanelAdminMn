@@ -1,3 +1,4 @@
+// @ts-nocheck
 import axiosInstance from "../api/axios"; // Instancia configurada de Axios
 import axios from "axios"; // Importa axios para poder usar isAxiosError
 

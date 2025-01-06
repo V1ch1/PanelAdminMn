@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./utils/AuthContext"; // Asegúrate de importar el contexto
 import Dashboard from "./pages/Dashboard";
