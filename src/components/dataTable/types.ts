@@ -35,3 +35,10 @@ export interface RowData {
   name: string;
   age: number;
 }
+
+export type UserRole = "admin" | "user"; // Define los posibles roles de usuario
+
+export interface User {
+  username: string;
+  role: UserRole;
+}

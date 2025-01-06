@@ -159,6 +159,7 @@ const DataTable: React.FC = () => {
               next: "Siguiente",
               showing: "Mostrando",
               results: () => "resultados",
+              to: "de",
             },
             noRecordsFound: "No se encontraron Leads en este momento",
           }}

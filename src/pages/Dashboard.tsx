@@ -1,5 +1,4 @@
-// @ts-nocheck
-import { useState } from "react";
+import React, { useState } from "react";
 import { useNavigate, Routes, Route, useLocation } from "react-router-dom";
 import {
   Bars3Icon,
@@ -13,24 +12,34 @@ import { Dialog, DialogBackdrop, DialogPanel } from "@headlessui/react";
 import Logo from "../../public/assets/logo-MN-25-peq.png";
 import DataTable from "../components/dataTable/DataTable";
 import UserManagement from "../components/users/UserManagement";
-import { useAuth } from "../utils/AuthContext";
 import Informes from "../components/informes/Informes";
+import { useAuth } from "../utils/AuthContext";
 
-type NavigationItem = {
-  name: string;
-  href: string;
-  icon: React.ElementType;
-};
-
-const navigation: NavigationItem[] = [
-  { name: "Dashboard", href: "/dashboard", icon: HomeIcon },
-  { name: "Usuarios", href: "/dashboard/users", icon: UserIcon },
+const navigationBase = [
+  {
+    name: "Dashboard",
+    href: "/dashboard",
+    icon: HomeIcon,
+    roles: ["admin", "editor", "viewer"],
+  },
+  {
+    name: "Usuarios",
+    href: "/dashboard/users",
+    icon: UserIcon,
+    roles: ["admin"],
+  },
   {
     name: "Informes",
     href: "/dashboard/informes",
     icon: DocumentChartBarIcon,
+    roles: ["admin"],
   },
-  { name: "LogOut", href: "#", icon: ArrowRightOnRectangleIcon },
+  {
+    name: "LogOut",
+    href: "#",
+    icon: ArrowRightOnRectangleIcon,
+    roles: ["admin", "editor", "viewer"],
+  },
 ];
 
 function classNames(...classes: string[]) {
@@ -40,10 +49,17 @@ function classNames(...classes: string[]) {
 export default function Dashboard() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { logout } = useAuth();
+  const { user, logout } = useAuth(); // Accedemos al contexto de autenticación
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  const handleNavigationClick = (item: NavigationItem) => {
+  console.log("Usuario logueado:", user);
+
+  // Filtra las opciones de navegación según el rol del usuario
+  const navigation = navigationBase.filter((item) =>
+    item.roles.includes(user?.role)
+  );
+
+  const handleNavigationClick = (item) => {
     if (item.name === "LogOut") {
       logout();
       navigate("/login");
@@ -135,8 +151,12 @@ export default function Dashboard() {
         <main className="py-10 px-4">
           <Routes>
             <Route path="/" element={<DataTable />} />
-            <Route path="/users" element={<UserManagement />} />
-            <Route path="/informes" element={<Informes />} />
+            {user?.role === "admin" && (
+              <Route path="/users" element={<UserManagement />} />
+            )}
+            {(user?.role === "admin" || user?.role === "editor") && (
+              <Route path="/informes" element={<Informes />} />
+            )}
           </Routes>
         </main>
       </div>

@@ -29,8 +29,6 @@ const PopUpComponent: React.FC<PopUpComponentProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [buttonLoading, setButtonLoading] = useState<boolean>(false);
 
-  console.log(eventDetails, "esto es eventDetails");
-
   useEffect(() => {
     console.log("Estado de isOpen, icodCli, asunto:", isOpen, icodCli, asunto);
     const fetchEventDetails = async () => {

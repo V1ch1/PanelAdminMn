@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import axiosInstance from "../../api/axios"; // Tu instancia de axios
 
 type UserRole = "Admin" | "Editor";
 
@@ -10,11 +11,7 @@ type User = {
 };
 
 const UserManagement: React.FC = () => {
-  const [users, setUsers] = useState<User[]>([
-    { id: 1, username: "admin", email: "admin@example.com", role: "Admin" },
-    { id: 2, username: "editor", email: "editor@example.com", role: "Editor" },
-  ]);
-
+  const [users, setUsers] = useState<User[]>([]);
   const [currentTab, setCurrentTab] = useState<"list" | "create">("list");
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [newUsername, setNewUsername] = useState<string>("");
@@ -22,8 +19,22 @@ const UserManagement: React.FC = () => {
   const [newUserPassword, setNewUserPassword] = useState<string>("");
   const [newUserRole, setNewUserRole] = useState<UserRole>("Editor");
 
+  // Obtener la lista de usuarios desde la API
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const response = await axiosInstance.get("/user");
+        setUsers(response.data); // Asumimos que la API retorna una lista de usuarios
+      } catch (error) {
+        console.error("Error al obtener usuarios:", error);
+      }
+    };
+
+    fetchUsers();
+  }, []); // Este efecto solo se ejecutará una vez, al cargar el componente
+
   // Funciones
-  const handleCreateUser = () => {
+  const handleCreateUser = async () => {
     if (!newUsername || !newUserEmail || (!editingUser && !newUserPassword))
       return;
 
@@ -35,17 +46,26 @@ const UserManagement: React.FC = () => {
           role: newUserRole,
         }
       : {
-          id: users.length + 1,
+          id: users.length + 1, // Esto se genera automáticamente; el ID será asignado por la API
           username: newUsername,
           email: newUserEmail,
           role: newUserRole,
         };
 
-    setUsers((prev) =>
-      editingUser
-        ? prev.map((user) => (user.id === editingUser.id ? newUser : user))
-        : [...prev, newUser]
-    );
+    try {
+      if (editingUser) {
+        // Actualizar usuario
+        await axiosInstance.put(`/user/${editingUser.id}`, newUser); // Asumimos que la API soporta PUT para actualizar
+      } else {
+        // Crear nuevo usuario
+        await axiosInstance.post("/user", newUser); // Asumimos que la API soporta POST para crear un usuario
+      }
+      // Actualizar la lista de usuarios
+      const response = await axiosInstance.get("/user");
+      setUsers(response.data);
+    } catch (error) {
+      console.error("Error al crear/actualizar usuario:", error);
+    }
 
     resetForm();
     setCurrentTab("list");
@@ -59,8 +79,15 @@ const UserManagement: React.FC = () => {
     setCurrentTab("create");
   };
 
-  const handleDeleteUser = (id: number) => {
-    setUsers((prev) => prev.filter((user) => user.id !== id));
+  const handleDeleteUser = async (id: number) => {
+    try {
+      await axiosInstance.delete(`/user/${id}`); // Asumimos que la API soporta DELETE para eliminar un usuario
+      // Actualizar la lista de usuarios después de eliminar
+      const response = await axiosInstance.get("/user");
+      setUsers(response.data);
+    } catch (error) {
+      console.error("Error al eliminar usuario:", error);
+    }
   };
 
   const resetForm = () => {
