@@ -1,17 +1,10 @@
 // @ts-nocheck
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Grid } from "gridjs-react";
 import { h } from "gridjs";
 import "gridjs/dist/theme/mermaid.css";
 import PopUpComponent from "./PopUpComponent";
 import { getEvents, Event } from "../../services/apiService";
-
-const normalizeText = (text: string) => {
-  return text
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase();
-};
 
 const SkeletonLoader = () => (
   <div className="animate-pulse">
@@ -64,7 +57,7 @@ const DataTable: React.FC = () => {
 
   const closePopup = () => {
     setIsOpen(false);
-    fetchEvents(activeTab); // Actualizar la tabla después de cerrar el popup
+    fetchEvents(activeTab);
     setSelectAsunto("");
     setSelectedIcodCli(null);
   };
