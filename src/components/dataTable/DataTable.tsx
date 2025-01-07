@@ -148,6 +148,7 @@ const DataTable: React.FC = () => {
           data={tableRows}
           columns={columns}
           sort={true}
+          resizable={true}
           search={true}
           pagination={{ enabled: true, limit: 50 }}
           language={{
@@ -160,8 +161,9 @@ const DataTable: React.FC = () => {
               showing: "Mostrando",
               results: () => "resultados",
               to: "de",
+              of: "de",
             },
-            noRecordsFound: "No se encontraron Leads en este momento",
+            noRecordsFound: "No se encontraron leads en este momento",
           }}
           className={{
             table: "table-auto w-full text-sm",
