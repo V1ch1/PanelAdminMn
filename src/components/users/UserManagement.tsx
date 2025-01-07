@@ -1,66 +1,59 @@
 import React, { useState, useEffect } from "react";
 import axiosInstance from "../../api/axios"; // Tu instancia de axios
 
-type UserRole = "Admin" | "Editor";
+type UserRole = 1 | 2; // 1: ADMIN, 2: Editor
 
 type User = {
   id: number;
-  username: string;
+  name: string;
   email: string;
   role: UserRole;
 };
 
 const UserManagement: React.FC = () => {
-  const [users, setUsers] = useState<User[]>([]);
+  const [users, setUsers] = useState<User[]>([]); // Lista de usuarios
   const [currentTab, setCurrentTab] = useState<"list" | "create">("list");
   const [editingUser, setEditingUser] = useState<User | null>(null);
-  const [newUsername, setNewUsername] = useState<string>("");
-  const [newUserEmail, setNewUserEmail] = useState<string>("");
-  const [newUserPassword, setNewUserPassword] = useState<string>("");
-  const [newUserRole, setNewUserRole] = useState<UserRole>("Editor");
+  const [newName, setNewName] = useState<string>(""); // Nombre del usuario
+  const [newEmail, setNewEmail] = useState<string>(""); // Email del usuario
+  const [newPassword, setNewPassword] = useState<string>(""); // Contraseña
+  const [newRole, setNewRole] = useState<UserRole>(2); // Rol (por defecto: Editor)
 
   // Obtener la lista de usuarios desde la API
   useEffect(() => {
     const fetchUsers = async () => {
       try {
         const response = await axiosInstance.get("/user");
-        setUsers(response.data); // Asumimos que la API retorna una lista de usuarios
+        setUsers(response.data);
       } catch (error) {
         console.error("Error al obtener usuarios:", error);
       }
     };
 
     fetchUsers();
-  }, []); // Este efecto solo se ejecutará una vez, al cargar el componente
+  }, []);
 
-  // Funciones
-  const handleCreateUser = async () => {
-    if (!newUsername || !newUserEmail || (!editingUser && !newUserPassword))
-      return;
+  // Crear o actualizar usuario
+  const handleCreateOrUpdateUser = async () => {
+    if (!newName || !newEmail || (!editingUser && !newPassword)) return;
 
-    const newUser: User = editingUser
-      ? {
-          ...editingUser,
-          username: newUsername,
-          email: newUserEmail,
-          role: newUserRole,
-        }
-      : {
-          id: users.length + 1, // Esto se genera automáticamente; el ID será asignado por la API
-          username: newUsername,
-          email: newUserEmail,
-          role: newUserRole,
-        };
+    const userData = {
+      name: newName,
+      email: newEmail.toLowerCase(), // Convertir el correo electrónico a minúsculas
+      role: newRole,
+      ...(editingUser ? {} : { password: newPassword }),
+    };
 
     try {
       if (editingUser) {
         // Actualizar usuario
-        await axiosInstance.put(`/user/${editingUser.id}`, newUser); // Asumimos que la API soporta PUT para actualizar
+        await axiosInstance.put(`/user/${editingUser.id}`, userData);
       } else {
         // Crear nuevo usuario
-        await axiosInstance.post("/user", newUser); // Asumimos que la API soporta POST para crear un usuario
+        await axiosInstance.post("/user/create", userData);
       }
-      // Actualizar la lista de usuarios
+
+      // Recargar lista de usuarios
       const response = await axiosInstance.get("/user");
       setUsers(response.data);
     } catch (error) {
@@ -71,18 +64,19 @@ const UserManagement: React.FC = () => {
     setCurrentTab("list");
   };
 
+  // Manejar edición de usuario
   const handleEditUser = (user: User) => {
     setEditingUser(user);
-    setNewUsername(user.username);
-    setNewUserEmail(user.email);
-    setNewUserRole(user.role);
+    setNewName(user.name);
+    setNewEmail(user.email);
+    setNewRole(user.role);
     setCurrentTab("create");
   };
 
+  // Eliminar usuario
   const handleDeleteUser = async (id: number) => {
     try {
-      await axiosInstance.delete(`/user/${id}`); // Asumimos que la API soporta DELETE para eliminar un usuario
-      // Actualizar la lista de usuarios después de eliminar
+      await axiosInstance.delete(`/user/${id}`);
       const response = await axiosInstance.get("/user");
       setUsers(response.data);
     } catch (error) {
@@ -90,12 +84,13 @@ const UserManagement: React.FC = () => {
     }
   };
 
+  // Resetear formulario
   const resetForm = () => {
     setEditingUser(null);
-    setNewUsername("");
-    setNewUserEmail("");
-    setNewUserPassword("");
-    setNewUserRole("Editor");
+    setNewName("");
+    setNewEmail("");
+    setNewPassword("");
+    setNewRole(2);
   };
 
   return (
@@ -136,7 +131,7 @@ const UserManagement: React.FC = () => {
           <table className="table-auto w-full bg-white rounded shadow-md">
             <thead className="bg-gray-200">
               <tr>
-                <th className="px-4 py-2 text-center">Nombre de Usuario</th>
+                <th className="px-4 py-2 text-center">Nombre</th>
                 <th className="px-4 py-2 text-center">Correo Electrónico</th>
                 <th className="px-4 py-2 text-center">Rol</th>
                 <th className="px-4 py-2 text-center">Acciones</th>
@@ -146,13 +141,13 @@ const UserManagement: React.FC = () => {
               {users.map((user) => (
                 <tr key={user.id} className="border-t">
                   <td className="px-4 py-2 text-center align-middle">
-                    {user.username}
+                    {user.name}
                   </td>
                   <td className="px-4 py-2 text-center align-middle">
                     {user.email}
                   </td>
                   <td className="px-4 py-2 text-center align-middle">
-                    {user.role}
+                    {user.role === 1 ? "Admin" : "Editor"}
                   </td>
                   <td className="px-4 py-2 text-center align-middle space-x-2">
                     <button
@@ -183,40 +178,37 @@ const UserManagement: React.FC = () => {
           <div className="flex flex-col gap-4">
             <input
               type="text"
-              placeholder="Nombre de Usuario"
-              value={newUsername}
-              onChange={(e) => setNewUsername(e.target.value)}
+              placeholder="Nombre"
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
               className="border rounded p-2"
-              autoComplete="off"
             />
             <input
               type="email"
               placeholder="Correo Electrónico"
-              value={newUserEmail}
-              onChange={(e) => setNewUserEmail(e.target.value)}
+              value={newEmail}
+              onChange={(e) => setNewEmail(e.target.value)}
               className="border rounded p-2"
-              autoComplete="off"
             />
             {!editingUser && (
               <input
                 type="password"
                 placeholder="Contraseña"
-                value={newUserPassword}
-                onChange={(e) => setNewUserPassword(e.target.value)}
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
                 className="border rounded p-2"
-                autoComplete="new-password"
               />
             )}
             <select
-              value={newUserRole}
-              onChange={(e) => setNewUserRole(e.target.value as UserRole)}
+              value={newRole}
+              onChange={(e) => setNewRole(parseInt(e.target.value) as UserRole)}
               className="border rounded p-2"
             >
-              <option value="Admin">Admin</option>
-              <option value="Editor">Editor</option>
+              <option value={1}>Admin</option>
+              <option value={2}>Editor</option>
             </select>
             <button
-              onClick={handleCreateUser}
+              onClick={handleCreateOrUpdateUser}
               className={`${
                 editingUser
                   ? "bg-yellow-500 hover:bg-yellow-600"
