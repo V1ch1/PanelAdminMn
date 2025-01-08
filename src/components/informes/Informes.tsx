@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { getEvents } from "../../services/apiService";
+import { AdjustmentsVerticalIcon } from "@heroicons/react/24/outline"; // Importar el icono de Heroicons
 
 const Informes: React.FC = () => {
   const [eventos, setEventos] = useState<any[]>([]); // Estado para los eventos
@@ -10,6 +11,7 @@ const Informes: React.FC = () => {
   ); // Estado para el parámetro 'status'
   const [fechaInicio, setFechaInicio] = useState<string>(""); // Fecha de inicio
   const [fechaFin, setFechaFin] = useState<string>(""); // Fecha de fin
+  const [mostrarFiltros, setMostrarFiltros] = useState<boolean>(false); // Estado para mostrar/ocultar filtros
 
   useEffect(() => {
     const cargarEventos = async () => {
@@ -51,7 +53,31 @@ const Informes: React.FC = () => {
     });
   };
 
-  // Agrupar eventos por clave y ordenar
+  // Función para corregir nombres de colectivos
+  const corregirNombreColectivo = (nombre: string): string => {
+    const mapeoCorrecciones: Record<string, string> = {
+      asesorias: "Asesorías",
+      abogados: "Abogados",
+      "entidades-sociales": "Entidades sociales",
+      clinicas: "Clínicas",
+      formacion: "Formación",
+      odontologos: "Odontólogos",
+    };
+
+    // Si el nombre está en el mapeo, usamos la corrección
+    if (mapeoCorrecciones[nombre.toLowerCase()]) {
+      return mapeoCorrecciones[nombre.toLowerCase()];
+    }
+
+    // Si no está, aplicamos lógica general:
+    // 1. Reemplazar guiones con espacios
+    // 2. Capitalizar la primera letra
+    return nombre
+      .replace(/-/g, " ") // Cambiar guiones por espacios
+      .replace(/\b\w/g, (char) => char.toUpperCase()); // Capitalizar la primera letra
+  };
+
+  // Agrupación y ordenación personalizada
   const agruparYOrdenarPorClave = (eventos: any[], clave: string) => {
     const agrupados = eventos.reduce((acumulador: any, evento: any) => {
       const valorClave = evento[clave] || "Desconocido";
@@ -62,8 +88,12 @@ const Informes: React.FC = () => {
       return acumulador;
     }, {});
 
-    // Convertir en un array y ordenar por valores descendentes
-    return Object.entries(agrupados).sort((a: any, b: any) => b[1] - a[1]);
+    // Convertir en un array, aplicar corrección de nombres y ordenar
+    const corregidosYOrdenados = Object.entries(agrupados)
+      .map(([clave, total]) => [corregirNombreColectivo(clave), total])
+      .sort(([, totalA], [, totalB]) => totalB - totalA); // Ordenar en orden descendente por el total
+
+    return corregidosYOrdenados;
   };
 
   // Obtener datos procesados
@@ -77,57 +107,70 @@ const Informes: React.FC = () => {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-4">Gestión de Eventos</h1>
+      <h1 className="text-2xl font-bold mb-4">Informe de Leads</h1>
+      {/* Contenedor principal con botones y filtros */}
+      <div className="mb-4 flex items-center justify-between flex-wrap">
+        {/* Botones de estado */}
+        <div className="flex">
+          <button
+            onClick={() => setStatus("pendiente")}
+            className={`py-2 px-4 font-semibold ${
+              status === "pendiente" ? "bg-blue-500 text-white" : "bg-gray-200"
+            }`}
+          >
+            Pendientes
+          </button>
+          <button
+            onClick={() => setStatus("gestionado")}
+            className={`py-2 px-4 font-semibold ${
+              status === "gestionado" ? "bg-blue-500 text-white" : "bg-gray-200"
+            }`}
+          >
+            Gestionados
+          </button>
+          <button
+            onClick={() => setStatus("totales")}
+            className={`py-2 px-4 font-semibold ${
+              status === "totales" ? "bg-blue-500 text-white" : "bg-gray-200"
+            }`}
+          >
+            Totales
+          </button>
 
-      {/* Botones para cambiar el estado */}
-      <div className="mb-4 flex space-x-4">
-        <button
-          onClick={() => setStatus("pendiente")}
-          className={`py-2 px-4 font-semibold ${
-            status === "pendiente" ? "bg-blue-500 text-white" : "bg-gray-200"
-          }`}
-        >
-          Pendientes
-        </button>
-        <button
-          onClick={() => setStatus("gestionado")}
-          className={`py-2 px-4 font-semibold ${
-            status === "gestionado" ? "bg-blue-500 text-white" : "bg-gray-200"
-          }`}
-        >
-          Gestionados
-        </button>
-        <button
-          onClick={() => setStatus("totales")}
-          className={`py-2 px-4 font-semibold ${
-            status === "totales" ? "bg-blue-500 text-white" : "bg-gray-200"
-          }`}
-        >
-          Totales
-        </button>
+          {/* Botón de filtros */}
+          <button
+            onClick={() => setMostrarFiltros((prev) => !prev)}
+            className="ml-2 p-2 bg-gray-300 rounded hover:bg-gray-400 flex items-center"
+            title="Mostrar/ocultar filtros"
+          >
+            <AdjustmentsVerticalIcon className="h-5 w-5 text-gray-700" />
+          </button>
+        </div>
       </div>
 
-      {/* Filtros por fecha */}
-      <div className="mb-4">
-        <label>
-          Fecha Inicio:
-          <input
-            type="date"
-            value={fechaInicio}
-            onChange={(e) => setFechaInicio(e.target.value)}
-            className="ml-2 border p-1"
-          />
-        </label>
-        <label className="ml-4">
-          Fecha Fin:
-          <input
-            type="date"
-            value={fechaFin}
-            onChange={(e) => setFechaFin(e.target.value)}
-            className="ml-2 border p-1"
-          />
-        </label>
-      </div>
+      {/* Filtros de fecha (visibles solo si mostrarFiltros es true) */}
+      {mostrarFiltros && (
+        <div className="mb-4 flex flex-wrap space-x-4 w-full md:w-auto">
+          <label className="flex flex-col">
+            <span className="text-gray-700 font-bold">Fecha Inicio:</span>
+            <input
+              type="date"
+              value={fechaInicio}
+              onChange={(e) => setFechaInicio(e.target.value)}
+              className="border p-1 w-full"
+            />
+          </label>
+          <label className="flex flex-col">
+            <span className="text-gray-700 font-bold">Fecha Fin:</span>
+            <input
+              type="date"
+              value={fechaFin}
+              onChange={(e) => setFechaFin(e.target.value)}
+              className="border p-1 w-full"
+            />
+          </label>
+        </div>
+      )}
 
       {/* Mostrar estado de carga, errores o resultados */}
       {loading && <p>Cargando eventos...</p>}
