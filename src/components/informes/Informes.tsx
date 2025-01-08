@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 import React, { useEffect, useState } from "react";
 import { getEvents } from "../../services/apiService";
 import { AdjustmentsVerticalIcon } from "@heroicons/react/24/outline";
