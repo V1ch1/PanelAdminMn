@@ -30,7 +30,10 @@ export const AuthProvider = ({ children }) => {
       const role =
         emailRoles[parsedUser.username] || parsedUser.role || "viewer";
       setUser({ ...parsedUser, role }); // Asegúrate de incluir el rol
+    } else {
+      setUser(null); // Si no hay usuario en localStorage, lo dejamos como null
     }
+
     setLoading(false);
   }, []);
 
