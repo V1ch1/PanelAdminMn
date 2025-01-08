@@ -1,17 +1,20 @@
 import React, { useEffect, useState } from "react";
 import { getEvents } from "../../services/apiService";
-import { AdjustmentsVerticalIcon } from "@heroicons/react/24/outline"; // Importar el icono de Heroicons
+import { AdjustmentsVerticalIcon } from "@heroicons/react/24/outline";
+import { Grid } from "gridjs-react";
+import "gridjs/dist/theme/mermaid.css";
 
 const Informes: React.FC = () => {
-  const [eventos, setEventos] = useState<any[]>([]); // Estado para los eventos
-  const [loading, setLoading] = useState<boolean>(false); // Para mostrar el loading
-  const [error, setError] = useState<string | null>(null); // Para manejar errores
+  const [eventos, setEventos] = useState<any[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState<"pendiente" | "gestionado" | "totales">(
     "pendiente"
-  ); // Estado para el parámetro 'status'
-  const [fechaInicio, setFechaInicio] = useState<string>(""); // Fecha de inicio
-  const [fechaFin, setFechaFin] = useState<string>(""); // Fecha de fin
-  const [mostrarFiltros, setMostrarFiltros] = useState<boolean>(false); // Estado para mostrar/ocultar filtros
+  );
+  const [fechaInicio, setFechaInicio] = useState<string>("");
+  const [fechaFin, setFechaFin] = useState<string>("");
+  const [mostrarFiltros, setMostrarFiltros] = useState<boolean>(false);
+  const [eventosSinFiltrar, setEventosSinFiltrar] = useState<any[]>([]);
 
   useEffect(() => {
     const cargarEventos = async () => {
@@ -27,6 +30,7 @@ const Informes: React.FC = () => {
           eventosObtenidos = await getEvents(status);
         }
         setEventos(eventosObtenidos);
+        setEventosSinFiltrar(eventosObtenidos); // Mantén los datos sin filtrar
       } catch (err: unknown) {
         setError("Error al cargar los eventos.");
         console.error("Error al cargar los eventos:", err);
@@ -38,10 +42,9 @@ const Informes: React.FC = () => {
     cargarEventos();
   }, [status]);
 
-  // Filtrar eventos por rango de fechas
   const filtrarEventosPorRango = () => {
     if (!fechaInicio || !fechaFin) {
-      return eventos; // Si no hay fechas seleccionadas, devuelve todos los eventos
+      return eventos;
     }
 
     const inicio = new Date(fechaInicio).setHours(0, 0, 0, 0);
@@ -53,7 +56,6 @@ const Informes: React.FC = () => {
     });
   };
 
-  // Función para corregir nombres de colectivos
   const corregirNombreColectivo = (nombre: string): string => {
     const mapeoCorrecciones: Record<string, string> = {
       asesorias: "Asesorías",
@@ -64,50 +66,101 @@ const Informes: React.FC = () => {
       odontologos: "Odontólogos",
     };
 
-    // Si el nombre está en el mapeo, usamos la corrección
     if (mapeoCorrecciones[nombre.toLowerCase()]) {
       return mapeoCorrecciones[nombre.toLowerCase()];
     }
 
-    // Si no está, aplicamos lógica general:
-    // 1. Reemplazar guiones con espacios
-    // 2. Capitalizar la primera letra
     return nombre
-      .replace(/-/g, " ") // Cambiar guiones por espacios
-      .replace(/\b\w/g, (char) => char.toUpperCase()); // Capitalizar la primera letra
+      .replace(/-/g, " ")
+      .replace(/\b\w/g, (char) => char.toUpperCase());
   };
 
-  // Agrupación y ordenación personalizada
-  const agruparYOrdenarPorClave = (eventos: any[], clave: string) => {
-    const agrupados = eventos.reduce((acumulador: any, evento: any) => {
-      const valorClave = evento[clave] || "Desconocido";
-      if (!acumulador[valorClave]) {
-        acumulador[valorClave] = 0;
+  const agruparPorDiaYColectivo = (eventos: any[]) => {
+    const grupos = eventos.reduce((acumulador: any, evento: any) => {
+      const fecha = new Date(evento.created_at).toISOString().split("T")[0];
+      const colectivo = corregirNombreColectivo(
+        evento.colectivo || "Desconocido"
+      );
+      const fuente = evento.fuente || "Desconocido";
+
+      if (!acumulador[fecha]) {
+        acumulador[fecha] = { colectivo: {}, fuente: {} };
       }
-      acumulador[valorClave]++;
+
+      if (!acumulador[fecha].colectivo[colectivo]) {
+        acumulador[fecha].colectivo[colectivo] = 0;
+      }
+      if (!acumulador[fecha].fuente[fuente]) {
+        acumulador[fecha].fuente[fuente] = 0;
+      }
+
+      acumulador[fecha].colectivo[colectivo]++;
+      acumulador[fecha].fuente[fuente]++;
       return acumulador;
     }, {});
 
-    // Convertir en un array, aplicar corrección de nombres y ordenar
-    const corregidosYOrdenados = Object.entries(agrupados)
-      .map(([clave, total]) => [corregirNombreColectivo(clave), total])
-      .sort(([, totalA], [, totalB]) => totalB - totalA); // Ordenar en orden descendente por el total
-
-    return corregidosYOrdenados;
+    return grupos;
   };
 
-  // Obtener datos procesados
-  const eventosFiltrados = filtrarEventosPorRango();
-  const totalEventosFiltrados = eventosFiltrados.length;
-  const eventosPorColectivo = agruparYOrdenarPorClave(
-    eventosFiltrados,
-    "colectivo"
-  );
-  const eventosPorFuente = agruparYOrdenarPorClave(eventosFiltrados, "fuente");
+  const eventosFiltrados = filtrarEventosPorRango(); // Datos filtrados para los totales
+  const datosAgrupados = agruparPorDiaYColectivo(eventosFiltrados);
+
+  // Añade "TOTAL" al final de las columnas
+  const columnasColectivos = [
+    "Fecha",
+    ...Array.from(
+      new Set(
+        eventosSinFiltrar.map((evento) =>
+          corregirNombreColectivo(evento.colectivo || "Desconocido")
+        )
+      )
+    ),
+    "TOTAL",
+  ];
+
+  const filasColectivos = Object.entries(
+    agruparPorDiaYColectivo(eventosSinFiltrar)
+  ).map(([fecha, datos]: any) => {
+    const fechaFormateada = new Date(fecha).toLocaleDateString("es-ES", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    }); // Formato día-mes-año
+    const valores = columnasColectivos
+      .slice(1, -1)
+      .map((colectivo) => datos.colectivo[colectivo] || 0);
+    const total = valores.reduce((acc, val) => acc + val, 0);
+    return [fechaFormateada, ...valores, total];
+  });
+
+  // Tabla de Fuente
+  const columnasFuentes = [
+    "Fecha",
+    ...Array.from(
+      new Set(eventosSinFiltrar.map((evento) => evento.fuente || "Desconocido"))
+    ),
+    "TOTAL",
+  ];
+
+  const filasFuentes = Object.entries(
+    agruparPorDiaYColectivo(eventosSinFiltrar)
+  ).map(([fecha, datos]: any) => {
+    const fechaFormateada = new Date(fecha).toLocaleDateString("es-ES", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    }); // Formato día-mes-año
+    const valores = columnasFuentes
+      .slice(1, -1)
+      .map((fuente) => datos.fuente[fuente] || 0);
+    const total = valores.reduce((acc, val) => acc + val, 0);
+    return [fechaFormateada, ...valores, total];
+  });
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-4">Informe de Leads</h1>
+      <h1 className="text-2xl font-bold mb-4">Gestión de Eventos</h1>
+
       {/* Contenedor principal con botones y filtros */}
       <div className="mb-4 flex items-center justify-between flex-wrap">
         {/* Botones de estado */}
@@ -137,18 +190,16 @@ const Informes: React.FC = () => {
             Totales
           </button>
 
-          {/* Botón de filtros */}
-          <button
+          {/* <button
             onClick={() => setMostrarFiltros((prev) => !prev)}
             className="ml-2 p-2 bg-gray-300 rounded hover:bg-gray-400 flex items-center"
             title="Mostrar/ocultar filtros"
           >
             <AdjustmentsVerticalIcon className="h-5 w-5 text-gray-700" />
-          </button>
+          </button> */}
         </div>
       </div>
 
-      {/* Filtros de fecha (visibles solo si mostrarFiltros es true) */}
       {mostrarFiltros && (
         <div className="mb-4 flex flex-wrap space-x-4 w-full md:w-auto">
           <label className="flex flex-col">
@@ -169,6 +220,15 @@ const Informes: React.FC = () => {
               className="border p-1 w-full"
             />
           </label>
+          {/* <button
+            onClick={() => {
+              setFechaInicio("");
+              setFechaFin("");
+            }}
+            className="bg-gray-200 text-gray-700 px-2 py-1 text-xs rounded hover:bg-gray-300 self-end"
+          >
+            Borrar
+          </button> */}
         </div>
       )}
 
@@ -177,35 +237,75 @@ const Informes: React.FC = () => {
       {error && <p className="text-red-500">{error}</p>}
       {!loading && !error && (
         <div>
-          <p className="text-lg mb-4">
+          {/* <p className="text-lg mb-4">
             {status === "totales"
-              ? `Total de eventos: ${totalEventosFiltrados}`
-              : `Total de eventos ${status}: ${totalEventosFiltrados}`}
+              ? `Total de eventos: ${eventosFiltrados.length}`
+              : `Total de eventos ${status}: ${eventosFiltrados.length}`}
           </p>
-
-          {/* Totales por colectivo */}
-          <div className="mb-4">
-            <h2 className="text-lg font-semibold">Total por Colectivo:</h2>
-            <ul className="list-disc pl-6">
-              {eventosPorColectivo.map(([colectivo, total]) => (
-                <li key={colectivo}>
-                  {colectivo}: {total}
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Totales por fuente */}
-          <div>
-            <h2 className="text-lg font-semibold">Total por Fuente:</h2>
-            <ul className="list-disc pl-6">
-              {eventosPorFuente.map(([fuente, total]) => (
-                <li key={fuente}>
-                  {fuente}: {total}
-                </li>
-              ))}
-            </ul>
-          </div>
+          Contenedor para Totales por Colectivo y Fuente
+          <div className="flex flex-wrap md:flex-nowrap gap-4">
+            <div className="flex-1">
+              <h2 className="text-lg font-semibold">Total por Colectivo:</h2>
+              <ul className="list-disc pl-6">
+                {Object.entries(
+                  eventosFiltrados.reduce(
+                    (acumulador: Record<string, number>, evento: any) => {
+                      const colectivo = corregirNombreColectivo(
+                        evento.colectivo || "Desconocido"
+                      );
+                      acumulador[colectivo] = (acumulador[colectivo] || 0) + 1;
+                      return acumulador;
+                    },
+                    {}
+                  )
+                ).map(([colectivo, total]) => (
+                  <li key={colectivo}>
+                    {colectivo}: {total}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div className="flex-1">
+              <h2 className="text-lg font-semibold">Total por Fuente:</h2>
+              <ul className="list-disc pl-6">
+                {Object.entries(
+                  eventosFiltrados.reduce(
+                    (acumulador: Record<string, number>, evento: any) => {
+                      const fuente = evento.fuente || "Desconocido";
+                      acumulador[fuente] = (acumulador[fuente] || 0) + 1;
+                      return acumulador;
+                    },
+                    {}
+                  )
+                ).map(([fuente, total]) => (
+                  <li key={fuente}>
+                    {fuente}: {total}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div> */}
+          {/* Tablas dinámicas */}
+          <h2 className="text-lg font-bold mt-6">Tabla por Colectivo</h2>
+          <Grid
+            data={[columnasColectivos, ...filasColectivos]}
+            search={false}
+            pagination={{
+              enabled: true,
+              limit: 10,
+            }}
+            resizable={true}
+          />
+          <h2 className="text-lg font-bold mt-6">Tabla por Fuente</h2>
+          <Grid
+            data={[columnasFuentes, ...filasFuentes]}
+            search={false}
+            pagination={{
+              enabled: true,
+              limit: 10,
+            }}
+            resizable={true}
+          />
         </div>
       )}
     </div>
