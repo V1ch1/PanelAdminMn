@@ -2,9 +2,9 @@
 
 import React, { useEffect, useState } from "react";
 import { getEvents } from "../../services/apiService";
-import { AdjustmentsVerticalIcon } from "@heroicons/react/24/outline";
 import { Grid } from "gridjs-react";
 import "gridjs/dist/theme/mermaid.css";
+import SkeletonLoader from "./SkeletonLoader"; // Importa tu componente de SkeletonLoader
 
 const Informes: React.FC = () => {
   const [eventos, setEventos] = useState<any[]>([]);
@@ -15,8 +15,17 @@ const Informes: React.FC = () => {
   );
   const [fechaInicio, setFechaInicio] = useState<string>("");
   const [fechaFin, setFechaFin] = useState<string>("");
-  const [mostrarFiltros, setMostrarFiltros] = useState<boolean>(false);
-  const [eventosSinFiltrar, setEventosSinFiltrar] = useState<any[]>([]);
+
+  const SkeletonLoader = () => (
+    <div className="animate-pulse">
+      <div className="h-6 bg-gray-300 rounded mb-4 w-1/4"></div>
+      <div className="space-y-2">
+        {Array.from({ length: 5 }).map((_, index) => (
+          <div key={index} className="h-8 bg-gray-200 rounded w-full"></div>
+        ))}
+      </div>
+    </div>
+  );
 
   useEffect(() => {
     const cargarEventos = async () => {
@@ -32,7 +41,6 @@ const Informes: React.FC = () => {
           eventosObtenidos = await getEvents(status);
         }
         setEventos(eventosObtenidos);
-        setEventosSinFiltrar(eventosObtenidos); // Mantén los datos sin filtrar
       } catch (err: unknown) {
         setError("Error al cargar los eventos.");
         console.error("Error al cargar los eventos:", err);
@@ -43,20 +51,6 @@ const Informes: React.FC = () => {
 
     cargarEventos();
   }, [status]);
-
-  const filtrarEventosPorRango = () => {
-    if (!fechaInicio || !fechaFin) {
-      return eventos;
-    }
-
-    const inicio = new Date(fechaInicio).setHours(0, 0, 0, 0);
-    const fin = new Date(fechaFin).setHours(23, 59, 59, 999);
-
-    return eventos.filter((evento) => {
-      const fechaEvento = new Date(evento.created_at).getTime();
-      return fechaEvento >= inicio && fechaEvento <= fin;
-    });
-  };
 
   const corregirNombreColectivo = (nombre: string): string => {
     const mapeoCorrecciones: Record<string, string> = {
@@ -79,7 +73,19 @@ const Informes: React.FC = () => {
 
   const agruparPorDiaYColectivo = (eventos: any[]) => {
     const grupos = eventos.reduce((acumulador: any, evento: any) => {
-      const fecha = new Date(evento.created_at).toISOString().split("T")[0];
+      const fechaObj = new Date(evento.created_at);
+
+      // Formato de fecha con día reducido y primera letra en mayúsculas
+      const diaReducido = fechaObj
+        .toLocaleDateString("es-ES", { weekday: "short" }) // Día reducido
+        .replace(/^\w/, (c) => c.toUpperCase()); // Capitaliza la primera letra
+
+      const fecha = `${diaReducido}, ${fechaObj.toLocaleDateString("es-ES", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      })}`;
+
       const colectivo = corregirNombreColectivo(
         evento.colectivo || "Desconocido"
       );
@@ -104,210 +110,167 @@ const Informes: React.FC = () => {
     return grupos;
   };
 
-  const eventosFiltrados = filtrarEventosPorRango(); // Datos filtrados para los totales
-  const datosAgrupados = agruparPorDiaYColectivo(eventosFiltrados);
+  const datosAgrupados = agruparPorDiaYColectivo(eventos);
 
-  // Añade "TOTAL" al final de las columnas
   const columnasColectivos = [
-    "Fecha",
+    { name: "Fecha", id: "fecha", width: "100px" },
     ...Array.from(
       new Set(
-        eventosSinFiltrar.map((evento) =>
+        eventos.map((evento) =>
           corregirNombreColectivo(evento.colectivo || "Desconocido")
         )
       )
-    ),
-    "TOTAL",
+    ).map((colectivo) => ({
+      name: colectivo,
+      id: colectivo,
+      width: "80px",
+    })),
+    { name: "TOTAL", id: "total", width: "100px" },
   ];
 
-  const filasColectivos = Object.entries(
-    agruparPorDiaYColectivo(eventosSinFiltrar)
-  ).map(([fecha, datos]: any) => {
-    const fechaFormateada = new Date(fecha).toLocaleDateString("es-ES", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    }); // Formato día-mes-año
-    const valores = columnasColectivos
-      .slice(1, -1)
-      .map((colectivo) => datos.colectivo[colectivo] || 0);
-    const total = valores.reduce((acc, val) => acc + val, 0);
-    return [fechaFormateada, ...valores, total];
-  });
+  const filasColectivos = Object.entries(datosAgrupados).map(
+    ([fecha, datos]: any) => {
+      const valores = columnasColectivos
+        .slice(1, -1)
+        .map((columna) => datos.colectivo[columna.name] || 0);
+      const total = valores.reduce((acc, val) => acc + val, 0);
+      return [fecha, ...valores, total];
+    }
+  );
 
-  // Tabla de Fuente
   const columnasFuentes = [
-    "Fecha",
+    { name: "Fecha", id: "fecha", width: "110px" },
     ...Array.from(
-      new Set(eventosSinFiltrar.map((evento) => evento.fuente || "Desconocido"))
-    ),
-    "TOTAL",
+      new Set(eventos.map((evento) => evento.fuente || "Desconocido"))
+    ).map((fuente) => ({
+      name: fuente,
+      id: fuente,
+      width: "200px",
+    })),
+    { name: "TOTAL", id: "total", width: "100px" },
   ];
 
-  const filasFuentes = Object.entries(
-    agruparPorDiaYColectivo(eventosSinFiltrar)
-  ).map(([fecha, datos]: any) => {
-    const fechaFormateada = new Date(fecha).toLocaleDateString("es-ES", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    }); // Formato día-mes-año
-    const valores = columnasFuentes
-      .slice(1, -1)
-      .map((fuente) => datos.fuente[fuente] || 0);
-    const total = valores.reduce((acc, val) => acc + val, 0);
-    return [fechaFormateada, ...valores, total];
-  });
+  const filasFuentes = Object.entries(datosAgrupados).map(
+    ([fecha, datos]: any) => {
+      const valores = columnasFuentes
+        .slice(1, -1)
+        .map((columna) => datos.fuente[columna.name] || 0);
+      const total = valores.reduce((acc, val) => acc + val, 0);
+      return [fecha, ...valores, total];
+    }
+  );
 
   return (
-    <div>
+    <div className="p-4">
       <h1 className="text-2xl font-bold mb-4">Gestión de Eventos</h1>
 
-      {/* Contenedor principal con botones y filtros */}
-      <div className="mb-4 flex items-center justify-between flex-wrap">
-        {/* Botones de estado */}
-        <div className="flex">
-          <button
-            onClick={() => setStatus("pendiente")}
-            className={`py-2 px-4 font-semibold ${
-              status === "pendiente" ? "bg-blue-500 text-white" : "bg-gray-200"
-            }`}
-          >
-            Pendientes
-          </button>
-          <button
-            onClick={() => setStatus("gestionado")}
-            className={`py-2 px-4 font-semibold ${
-              status === "gestionado" ? "bg-blue-500 text-white" : "bg-gray-200"
-            }`}
-          >
-            Gestionados
-          </button>
-          <button
-            onClick={() => setStatus("totales")}
-            className={`py-2 px-4 font-semibold ${
-              status === "totales" ? "bg-blue-500 text-white" : "bg-gray-200"
-            }`}
-          >
-            Totales
-          </button>
-
-          {/* <button
-            onClick={() => setMostrarFiltros((prev) => !prev)}
-            className="ml-2 p-2 bg-gray-300 rounded hover:bg-gray-400 flex items-center"
-            title="Mostrar/ocultar filtros"
-          >
-            <AdjustmentsVerticalIcon className="h-5 w-5 text-gray-700" />
-          </button> */}
-        </div>
+      {/* Botones de selección de estado */}
+      <div className="mb-4 flex items-center space-x-2">
+        <button
+          onClick={() => setStatus("pendiente")}
+          className={`py-2 px-4 font-semibold rounded ${
+            status === "pendiente"
+              ? "bg-blue-500 text-white"
+              : "bg-gray-200 text-gray-700"
+          }`}
+        >
+          Pendientes
+        </button>
+        <button
+          onClick={() => setStatus("gestionado")}
+          className={`py-2 px-4 font-semibold rounded ${
+            status === "gestionado"
+              ? "bg-blue-500 text-white"
+              : "bg-gray-200 text-gray-700"
+          }`}
+        >
+          Gestionados
+        </button>
+        <button
+          onClick={() => setStatus("totales")}
+          className={`py-2 px-4 font-semibold rounded ${
+            status === "totales"
+              ? "bg-blue-500 text-white"
+              : "bg-gray-200 text-gray-700"
+          }`}
+        >
+          Totales
+        </button>
       </div>
 
-      {mostrarFiltros && (
-        <div className="mb-4 flex flex-wrap space-x-4 w-full md:w-auto">
-          <label className="flex flex-col">
-            <span className="text-gray-700 font-bold">Fecha Inicio:</span>
-            <input
-              type="date"
-              value={fechaInicio}
-              onChange={(e) => setFechaInicio(e.target.value)}
-              className="border p-1 w-full"
-            />
-          </label>
-          <label className="flex flex-col">
-            <span className="text-gray-700 font-bold">Fecha Fin:</span>
-            <input
-              type="date"
-              value={fechaFin}
-              onChange={(e) => setFechaFin(e.target.value)}
-              className="border p-1 w-full"
-            />
-          </label>
-          {/* <button
-            onClick={() => {
-              setFechaInicio("");
-              setFechaFin("");
-            }}
-            className="bg-gray-200 text-gray-700 px-2 py-1 text-xs rounded hover:bg-gray-300 self-end"
-          >
-            Borrar
-          </button> */}
-        </div>
-      )}
-
-      {/* Mostrar estado de carga, errores o resultados */}
-      {loading && <p>Cargando eventos...</p>}
-      {error && <p className="text-red-500">{error}</p>}
-      {!loading && !error && (
+      {loading ? (
+        <SkeletonLoader />
+      ) : error ? (
+        <p className="text-red-500">{error}</p>
+      ) : (
         <div>
-          {/* <p className="text-lg mb-4">
-            {status === "totales"
-              ? `Total de eventos: ${eventosFiltrados.length}`
-              : `Total de eventos ${status}: ${eventosFiltrados.length}`}
-          </p>
-          Contenedor para Totales por Colectivo y Fuente
-          <div className="flex flex-wrap md:flex-nowrap gap-4">
-            <div className="flex-1">
-              <h2 className="text-lg font-semibold">Total por Colectivo:</h2>
-              <ul className="list-disc pl-6">
-                {Object.entries(
-                  eventosFiltrados.reduce(
-                    (acumulador: Record<string, number>, evento: any) => {
-                      const colectivo = corregirNombreColectivo(
-                        evento.colectivo || "Desconocido"
-                      );
-                      acumulador[colectivo] = (acumulador[colectivo] || 0) + 1;
-                      return acumulador;
-                    },
-                    {}
-                  )
-                ).map(([colectivo, total]) => (
-                  <li key={colectivo}>
-                    {colectivo}: {total}
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div className="flex-1">
-              <h2 className="text-lg font-semibold">Total por Fuente:</h2>
-              <ul className="list-disc pl-6">
-                {Object.entries(
-                  eventosFiltrados.reduce(
-                    (acumulador: Record<string, number>, evento: any) => {
-                      const fuente = evento.fuente || "Desconocido";
-                      acumulador[fuente] = (acumulador[fuente] || 0) + 1;
-                      return acumulador;
-                    },
-                    {}
-                  )
-                ).map(([fuente, total]) => (
-                  <li key={fuente}>
-                    {fuente}: {total}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div> */}
-          {/* Tablas dinámicas */}
+          {/* Tabla por Colectivo */}
           <h2 className="text-lg font-bold mt-6">Tabla por Colectivo</h2>
-          <Grid
-            data={[columnasColectivos, ...filasColectivos]}
-            search={false}
-            pagination={{
-              enabled: true,
-              limit: 10,
-            }}
-            resizable={true}
-          />
+          <div className="overflow-x-auto">
+            <Grid
+              data={filasColectivos}
+              columns={columnasColectivos}
+              search={false}
+              pagination={{
+                enabled: true,
+                limit: 10,
+              }}
+              resizable={true}
+              language={{
+                search: {
+                  placeholder: "Buscar...",
+                },
+                pagination: {
+                  previous: "Anterior",
+                  next: "Siguiente",
+                  showing: "Mostrando",
+                  results: () => "resultados",
+                  to: "de",
+                  of: "de",
+                },
+                noRecordsFound: "No se encontraron leads en este momento",
+              }}
+              className={{
+                table: "table-auto min-w-full text-sm",
+                header: "bg-gray-100 text-gray-700 font-bold whitespace-nowrap",
+                row: "hover:bg-gray-50",
+              }}
+            />
+          </div>
+
+          {/* Tabla por Fuente */}
           <h2 className="text-lg font-bold mt-6">Tabla por Fuente</h2>
-          <Grid
-            data={[columnasFuentes, ...filasFuentes]}
-            search={false}
-            pagination={{
-              enabled: true,
-              limit: 10,
-            }}
-            resizable={true}
-          />
+          <div className="overflow-x-auto">
+            <Grid
+              data={filasFuentes}
+              columns={columnasFuentes}
+              search={false}
+              pagination={{
+                enabled: true,
+                limit: 10,
+              }}
+              resizable={true}
+              language={{
+                search: {
+                  placeholder: "Buscar...",
+                },
+                pagination: {
+                  previous: "Anterior",
+                  next: "Siguiente",
+                  showing: "Mostrando",
+                  results: () => "resultados",
+                  to: "de",
+                  of: "de",
+                },
+                noRecordsFound: "No se encontraron leads en este momento",
+              }}
+              className={{
+                table: "table-auto min-w-full text-sm",
+                header: "bg-gray-100 text-gray-700 font-bold whitespace-nowrap",
+                row: "hover:bg-gray-50",
+              }}
+            />
+          </div>
         </div>
       )}
     </div>
