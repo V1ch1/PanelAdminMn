@@ -20,15 +20,29 @@ jobs:
         with:
           node-version: "22"
 
-      # 3. Instalar dependencias
+      # 3. Verificar la versión de Node.js activa
+      - name: Check Node.js version
+        run: node --version
+
+      # 4. Limpiar dependencias (opcional, para garantizar un entorno limpio)
+      - name: Clean dependencies
+        run: |
+          rm -rf node_modules package-lock.json
+          npm install
+
+      # 5. Instalar dependencias
       - name: Install dependencies
         run: npm install
 
-      # 4. Compilar el proyecto de React (TypeScript)
+      # 6. Mostrar dependencias de Vite y sus versiones
+      - name: Check Vite and dependencies
+        run: npm list vite
+
+      # 7. Compilar el proyecto de React (TypeScript)
       - name: Build React Project
         run: npm run build
 
-      # 5. Subir archivos a S3
+      # 8. Subir archivos a S3
       - name: Deploy to S3
         run: aws s3 sync build/ s3://panel.mnprogram.com --delete
         env:
@@ -36,7 +50,7 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_REGION: "us-east-1" # Cambia según la región de tu bucket S3
 
-      # 6. Invalidar caché de CloudFront
+      # 9. Invalidar caché de CloudFront
       - name: Invalidate CloudFront cache
         run: aws cloudfront create-invalidation --distribution-id ESDEN5L92Y3IK --paths "/*"
         env:
