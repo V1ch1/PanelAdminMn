@@ -162,7 +162,7 @@ const Informes: React.FC = () => {
 
   return (
     <div className="p-4">
-      <h1 className="text-2xl font-bold mb-4">Gestión de Eventos</h1>
+      <h1 className="text-2xl font-bold mb-4">Informe de Leads</h1>
 
       {/* Botones de selección de estado */}
       <div className="mb-4 flex items-center space-x-2">
