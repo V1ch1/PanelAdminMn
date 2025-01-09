@@ -1,30 +1,17 @@
 // @ts-nocheck
 
 import React, { useEffect, useState } from "react";
-import { getEvents } from "../../services/apiService";
+import { getEvents, Event } from "../../services/apiService";
 import { Grid } from "gridjs-react";
 import "gridjs/dist/theme/mermaid.css";
-import SkeletonLoader from "./SkeletonLoader"; // Importa tu componente de SkeletonLoader
+import { SkeletonLoader } from "../SkeletonLoader/SkeletonLoader";
 
 const Informes: React.FC = () => {
-  const [eventos, setEventos] = useState<any[]>([]);
+  const [eventos, setEventos] = useState<Event[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState<"pendiente" | "gestionado" | "totales">(
     "pendiente"
-  );
-  const [fechaInicio, setFechaInicio] = useState<string>("");
-  const [fechaFin, setFechaFin] = useState<string>("");
-
-  const SkeletonLoader = () => (
-    <div className="animate-pulse">
-      <div className="h-6 bg-gray-300 rounded mb-4 w-1/4"></div>
-      <div className="space-y-2">
-        {Array.from({ length: 5 }).map((_, index) => (
-          <div key={index} className="h-8 bg-gray-200 rounded w-full"></div>
-        ))}
-      </div>
-    </div>
   );
 
   useEffect(() => {
@@ -56,7 +43,7 @@ const Informes: React.FC = () => {
     const mapeoCorrecciones: Record<string, string> = {
       asesorias: "Asesorías",
       abogados: "Abogados",
-      "entidades-sociales": "Entidades sociales",
+      "entidades-sociales": "EESS",
       clinicas: "Clínicas",
       formacion: "Formación",
       odontologos: "Odontólogos",
@@ -71,14 +58,13 @@ const Informes: React.FC = () => {
       .replace(/\b\w/g, (char) => char.toUpperCase());
   };
 
-  const agruparPorDiaYColectivo = (eventos: any[]) => {
-    const grupos = eventos.reduce((acumulador: any, evento: any) => {
+  const agruparPorDiaYColectivo = (eventos: Event[]) => {
+    const grupos = eventos.reduce((acumulador: any, evento: Event) => {
       const fechaObj = new Date(evento.created_at);
 
-      // Formato de fecha con día reducido y primera letra en mayúsculas
       const diaReducido = fechaObj
-        .toLocaleDateString("es-ES", { weekday: "short" }) // Día reducido
-        .replace(/^\w/, (c) => c.toUpperCase()); // Capitaliza la primera letra
+        .toLocaleDateString("es-ES", { weekday: "short" })
+        .replace(/^\w/, (c) => c.toUpperCase());
 
       const fecha = `${diaReducido}, ${fechaObj.toLocaleDateString("es-ES", {
         day: "2-digit",
