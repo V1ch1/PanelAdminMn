@@ -18,7 +18,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v2
         with:
-          node-version: "16" # Cambia esto si usas otra versión de Node.js
+          node-version: "18"
 
       # 3. Instalar dependencias
       - name: Install dependencies
