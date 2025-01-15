@@ -58,6 +58,45 @@ const Informes: React.FC = () => {
       .replace(/\b\w/g, (char) => char.toUpperCase());
   };
 
+  const agruparPorHoraConColectivos = (eventos: Event[]) => {
+    const hoy = new Date();
+    const inicioDelDia = new Date(
+      hoy.getFullYear(),
+      hoy.getMonth(),
+      hoy.getDate()
+    );
+    const finDelDia = new Date(
+      hoy.getFullYear(),
+      hoy.getMonth(),
+      hoy.getDate() + 1
+    );
+
+    const eventosHoy = eventos.filter((evento) => {
+      const fechaEvento = new Date(evento.created_at);
+      return fechaEvento >= inicioDelDia && fechaEvento < finDelDia;
+    });
+
+    const grupos = Array.from({ length: 24 }, (_, hora) => ({
+      hora: `${hora}:00`,
+      count: 0,
+      colectivos: {} as Record<string, number>,
+    }));
+
+    eventosHoy.forEach((evento) => {
+      const fechaEvento = new Date(evento.created_at);
+      const hora = fechaEvento.getHours();
+      const colectivo = corregirNombreColectivo(
+        evento.colectivo || "Desconocido"
+      );
+
+      grupos[hora].count++;
+      grupos[hora].colectivos[colectivo] =
+        (grupos[hora].colectivos[colectivo] || 0) + 1;
+    });
+
+    return grupos.filter((grupo) => grupo.count > 0); // Filtrar las horas sin leads
+  };
+
   const agruparPorDiaYColectivo = (eventos: Event[]) => {
     const grupos = eventos.reduce((acumulador: any, evento: Event) => {
       const fechaObj = new Date(evento.created_at);
@@ -96,6 +135,7 @@ const Informes: React.FC = () => {
     return grupos;
   };
 
+  const datosPorHora = agruparPorHoraConColectivos(eventos);
   const datosAgrupados = agruparPorDiaYColectivo(eventos);
 
   const columnasColectivos = [
@@ -184,7 +224,6 @@ const Informes: React.FC = () => {
         </button>
       </div>
 
-      {/* Contenido */}
       {loading ? (
         <SkeletonLoader />
       ) : error ? (
@@ -197,6 +236,52 @@ const Informes: React.FC = () => {
             <Grid
               data={filasColectivos}
               columns={columnasColectivos}
+              search={false}
+              pagination={{
+                enabled: true,
+                limit: 10,
+              }}
+              resizable={true}
+              language={{
+                search: {
+                  placeholder: "Buscar...",
+                },
+                pagination: {
+                  previous: "Anterior",
+                  next: "Siguiente",
+                  showing: "Mostrando",
+                  results: () => "resultados",
+                  to: "de",
+                  of: "de",
+                },
+                noRecordsFound: "No se encontraron leads en este momento",
+              }}
+              className={{
+                table: "table-auto min-w-full text-sm",
+                header: "bg-gray-100 text-gray-700 font-bold whitespace-nowrap",
+                row: "hover:bg-gray-50",
+              }}
+            />
+          </div>
+
+          {/* Evolución diaria */}
+          <h2 className="text-lg font-bold mt-6">
+            Evolución de Leads por horas (Hoy)
+          </h2>
+          <div className="overflow-x-auto mb-6">
+            <Grid
+              data={datosPorHora.map((grupo) => [
+                grupo.hora,
+                grupo.count,
+                Object.entries(grupo.colectivos)
+                  .map(([colectivo, count]) => `${colectivo}: ${count}`)
+                  .join(", "),
+              ])}
+              columns={[
+                { name: "Hora", id: "hora" },
+                { name: "Cantidad", id: "count" },
+                { name: "Colectivos", id: "colectivos" },
+              ]}
               search={false}
               pagination={{
                 enabled: true,
