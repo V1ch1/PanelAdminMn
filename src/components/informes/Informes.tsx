@@ -148,42 +148,43 @@ const Informes: React.FC = () => {
 
   return (
     <div className="p-4">
-      <h1 className="text-2xl font-bold mb-4">Informe de Leads</h1>
+      <h1 className="text-2xl font-bold mb-6">Informe de Leads</h1>
 
-      {/* Botones de selección de estado */}
-      <div className="mb-4 flex items-center space-x-2">
+      {/* Pestañas */}
+      <div className="flex border-b mb-4">
         <button
           onClick={() => setStatus("pendiente")}
-          className={`py-2 px-4 font-semibold rounded ${
+          className={`px-4 py-2 font-semibold ${
             status === "pendiente"
-              ? "bg-blue-500 text-white"
-              : "bg-gray-200 text-gray-700"
+              ? "border-b-2 border-[#1371CF] text-[#1371CF]"
+              : "text-gray-500 hover:text-[#1371CF]"
           }`}
         >
           Pendientes
         </button>
         <button
           onClick={() => setStatus("gestionado")}
-          className={`py-2 px-4 font-semibold rounded ${
+          className={`px-4 py-2 font-semibold ${
             status === "gestionado"
-              ? "bg-blue-500 text-white"
-              : "bg-gray-200 text-gray-700"
+              ? "border-b-2 border-[#1371CF] text-[#1371CF]"
+              : "text-gray-500 hover:text-[#1371CF]"
           }`}
         >
           Gestionados
         </button>
         <button
           onClick={() => setStatus("totales")}
-          className={`py-2 px-4 font-semibold rounded ${
+          className={`px-4 py-2 font-semibold ${
             status === "totales"
-              ? "bg-blue-500 text-white"
-              : "bg-gray-200 text-gray-700"
+              ? "border-b-2 border-[#1371CF] text-[#1371CF]"
+              : "text-gray-500 hover:text-[#1371CF]"
           }`}
         >
           Totales
         </button>
       </div>
 
+      {/* Contenido */}
       {loading ? (
         <SkeletonLoader />
       ) : error ? (

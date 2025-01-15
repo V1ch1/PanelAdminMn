@@ -87,26 +87,27 @@ const DataTable: React.FC = () => {
   ];
 
   return (
-    <div>
-      {/* Botones Leads */}
-      <div className="flex flex-col items-center md:flex-row md:justify-center space-y-4 md:space-y-0 md:space-x-4 border-b py-4">
-        {/* Leads Buttons */}
+    <div className="p-4">
+      <h1 className="text-2xl font-bold mb-6">Gestión de Leads</h1>
+
+      {/* Pestañas */}
+      <div className="flex border-b mb-4">
         <button
           onClick={() => setActiveTab("pendiente")}
-          className={`py-2 px-4 font-semibold ${
+          className={`px-4 py-2 font-semibold ${
             activeTab === "pendiente"
               ? "border-b-2 border-green-700 text-green-700"
-              : "text-black"
+              : "text-gray-500 hover:text-green-700"
           }`}
         >
           Leads Pendientes
         </button>
         <button
           onClick={() => setActiveTab("gestionado")}
-          className={`py-2 px-4 font-semibold ${
+          className={`px-4 py-2 font-semibold ${
             activeTab === "gestionado"
               ? "border-b-2 border-red-700 text-red-700"
-              : "text-black"
+              : "text-gray-500 hover:text-red-700"
           }`}
         >
           Leads Resueltos
@@ -115,9 +116,9 @@ const DataTable: React.FC = () => {
         {/* Botón Refrescar */}
         <button
           onClick={() => fetchEvents(activeTab)}
-          className="py-2 px-4 bg-blue-600 text-white rounded hover:bg-blue-700 md:ml-4"
+          className="py-2 px-4 ml-auto bg-blue-600 text-white rounded hover:bg-blue-700"
         >
-          Refrescar
+          Actualizar
         </button>
       </div>
 
