@@ -14,16 +14,19 @@ const DataTable: React.FC = () => {
   const [asunto, setSelectAsunto] = useState<string>("");
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [selectedIcodCli, setSelectedIcodCli] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<"pendiente" | "gestionado">(
-    "pendiente"
-  );
 
-  const fetchEvents = async (status: "pendiente" | "gestionado") => {
+  // Recuperar todos los eventos combinando los estados
+  const fetchEvents = async () => {
     setLoading(true);
     setError(null);
     try {
-      const events = await getEvents(status);
-      setEvents(events);
+      // Llamar a la API para obtener pendientes y gestionados
+      const pendingEvents = await getEvents("pendiente");
+      const managedEvents = await getEvents("gestionado");
+
+      // Combinar ambos conjuntos de datos
+      const combinedEvents = [...pendingEvents, ...managedEvents];
+      setEvents(combinedEvents);
     } catch (err: unknown) {
       setError(
         err instanceof Error
@@ -36,8 +39,8 @@ const DataTable: React.FC = () => {
   };
 
   useEffect(() => {
-    fetchEvents(activeTab);
-  }, [activeTab]);
+    fetchEvents();
+  }, []);
 
   const openPopup = (icodCli: string, asunto: string) => {
     setSelectedIcodCli(icodCli);
@@ -46,10 +49,9 @@ const DataTable: React.FC = () => {
   };
 
   const closePopup = () => {
-    setIsOpen(false);
-    fetchEvents(activeTab);
-    setSelectAsunto("");
-    setSelectedIcodCli(null);
+    setIsOpen(false); // Cierra el popup
+    setSelectAsunto(""); // Resetea el asunto seleccionado
+    setSelectedIcodCli(null); // Resetea el icodCli seleccionado
   };
 
   const tableRows = events.map((event) => [
@@ -63,7 +65,7 @@ const DataTable: React.FC = () => {
     event.asunto || "N/A",
     event.fuente || "N/A",
     event.section || "N/A",
-    event.status || "N/A",
+
     h(
       "button",
       {
@@ -82,45 +84,20 @@ const DataTable: React.FC = () => {
     "Asunto",
     "Fuente",
     "Sección",
-    "Estado",
     "Acciones",
   ];
 
   return (
     <div className="p-4">
-      <h1 className="text-2xl font-bold mb-6">Gestión de Leads</h1>
+      <h1 className="text-2xl font-bold mb-6">Listado de Leads</h1>
 
-      {/* Pestañas */}
-      <div className="flex border-b mb-4">
-        <button
-          onClick={() => setActiveTab("pendiente")}
-          className={`px-4 py-2 font-semibold ${
-            activeTab === "pendiente"
-              ? "border-b-2 border-green-700 text-green-700"
-              : "text-gray-500 hover:text-green-700"
-          }`}
-        >
-          Leads Pendientes
-        </button>
-        <button
-          onClick={() => setActiveTab("gestionado")}
-          className={`px-4 py-2 font-semibold ${
-            activeTab === "gestionado"
-              ? "border-b-2 border-red-700 text-red-700"
-              : "text-gray-500 hover:text-red-700"
-          }`}
-        >
-          Leads Resueltos
-        </button>
-
-        {/* Botón Refrescar */}
-        <button
-          onClick={() => fetchEvents(activeTab)}
-          className="py-2 px-4 ml-auto bg-blue-600 text-white rounded hover:bg-blue-700"
-        >
-          Actualizar
-        </button>
-      </div>
+      {/* Botón Refrescar */}
+      <button
+        onClick={fetchEvents}
+        className="py-2 px-4 mb-4 bg-blue-600 text-white rounded hover:bg-blue-700"
+      >
+        Actualizar
+      </button>
 
       {/* Tabla */}
       {loading ? (
@@ -164,7 +141,7 @@ const DataTable: React.FC = () => {
           icodCli={selectedIcodCli}
           asunto={asunto}
           closePopup={closePopup}
-          fetchEvents={() => fetchEvents(activeTab)} // Pasar la función para actualizar la tabla
+          fetchEvents={fetchEvents}
         />
       )}
     </div>

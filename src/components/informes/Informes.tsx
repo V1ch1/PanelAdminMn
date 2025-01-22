@@ -1,5 +1,4 @@
 // @ts-nocheck
-
 import React, { useEffect, useState } from "react";
 import { getEvents, Event } from "../../services/apiService";
 import { Grid } from "gridjs-react";
@@ -10,24 +9,15 @@ const Informes: React.FC = () => {
   const [eventos, setEventos] = useState<Event[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [status, setStatus] = useState<"pendiente" | "gestionado" | "totales">(
-    "pendiente"
-  );
 
   useEffect(() => {
     const cargarEventos = async () => {
       setLoading(true);
       setError(null);
       try {
-        let eventosObtenidos = [];
-        if (status === "totales") {
-          const pendientes = await getEvents("pendiente");
-          const gestionados = await getEvents("gestionado");
-          eventosObtenidos = [...pendientes, ...gestionados];
-        } else {
-          eventosObtenidos = await getEvents(status);
-        }
-        setEventos(eventosObtenidos);
+        const pendientes = await getEvents("pendiente");
+        const gestionados = await getEvents("gestionado");
+        setEventos([...pendientes, ...gestionados]);
       } catch (err: unknown) {
         setError("Error al cargar los eventos.");
         console.error("Error al cargar los eventos:", err);
@@ -37,7 +27,7 @@ const Informes: React.FC = () => {
     };
 
     cargarEventos();
-  }, [status]);
+  }, []);
 
   const corregirNombreColectivo = (nombre: string): string => {
     const mapeoCorrecciones: Record<string, string> = {
@@ -159,7 +149,10 @@ const Informes: React.FC = () => {
       const valores = columnasColectivos
         .slice(1, -1)
         .map((columna) => datos.colectivo[columna.name] || 0);
-      const total = valores.reduce((acc, val) => acc + val, 0);
+      const total = valores.reduce(
+        (acc, val) => acc + (typeof val === "number" ? val : 0),
+        0
+      );
       return [fecha, ...valores, total];
     }
   );
@@ -181,170 +174,145 @@ const Informes: React.FC = () => {
       const valores = columnasFuentes
         .slice(1, -1)
         .map((columna) => datos.fuente[columna.name] || 0);
-      const total = valores.reduce((acc, val) => acc + val, 0);
+      const total = valores.reduce(
+        (acc, val) => acc + (typeof val === "number" ? val : 0),
+        0
+      );
       return [fecha, ...valores, total];
     }
   );
+
+  // Sumar total de todas las horas
+  const totalPorHora = datosPorHora.reduce(
+    (total, grupo) => {
+      total.count += grupo.count;
+      Object.entries(grupo.colectivos).forEach(([colectivo, count]) => {
+        total.colectivos[colectivo] =
+          (total.colectivos[colectivo] || 0) + count;
+      });
+      return total;
+    },
+    { hora: "Total", count: 0, colectivos: {} }
+  );
+
+  const filasPorHoraConTotal = [
+    ...datosPorHora.map((grupo) => [
+      grupo.hora,
+      grupo.count,
+      Object.entries(grupo.colectivos)
+        .map(([colectivo, count]) => `${colectivo}: ${count}`)
+        .join(", "),
+    ]),
+    [
+      totalPorHora.hora,
+      totalPorHora.count,
+      Object.entries(totalPorHora.colectivos)
+        .map(([colectivo, count]) => `${colectivo}: ${count}`)
+        .join(", "),
+    ], // Fila total
+  ];
 
   return (
     <div className="p-4">
       <h1 className="text-2xl font-bold mb-6">Informe de Leads</h1>
 
-      {/* Pestañas */}
-      <div className="flex border-b mb-4">
-        <button
-          onClick={() => setStatus("pendiente")}
-          className={`px-4 py-2 font-semibold ${
-            status === "pendiente"
-              ? "border-b-2 border-[#1371CF] text-[#1371CF]"
-              : "text-gray-500 hover:text-[#1371CF]"
-          }`}
-        >
-          Pendientes
-        </button>
-        <button
-          onClick={() => setStatus("gestionado")}
-          className={`px-4 py-2 font-semibold ${
-            status === "gestionado"
-              ? "border-b-2 border-[#1371CF] text-[#1371CF]"
-              : "text-gray-500 hover:text-[#1371CF]"
-          }`}
-        >
-          Gestionados
-        </button>
-        <button
-          onClick={() => setStatus("totales")}
-          className={`px-4 py-2 font-semibold ${
-            status === "totales"
-              ? "border-b-2 border-[#1371CF] text-[#1371CF]"
-              : "text-gray-500 hover:text-[#1371CF]"
-          }`}
-        >
-          Totales
-        </button>
+      {/* Tabla de Evolución de Leads por horas (Hoy) */}
+      <h2 className="text-lg font-bold mt-6">
+        Evolución de Leads por horas (Hoy)
+      </h2>
+      <div className="overflow-x-auto mb-6">
+        <Grid
+          data={filasPorHoraConTotal}
+          columns={[
+            { name: "Hora", id: "hora" },
+            { name: "Cantidad", id: "count" },
+            { name: "Colectivos", id: "colectivos" },
+          ]}
+          search={false}
+          pagination={false}
+          language={{
+            search: {
+              placeholder: "Buscar...",
+            },
+            noRecordsFound: "No se encontraron leads en este momento",
+          }}
+          className={{
+            table: "table-auto min-w-full text-sm",
+            header: "bg-blue-600 text-white font-bold text-2xl text-center p-4",
+            row: "hover:bg-gray-50",
+          }}
+        />
       </div>
 
-      {loading ? (
-        <SkeletonLoader />
-      ) : error ? (
-        <p className="text-red-500">{error}</p>
-      ) : (
-        <div>
-          {/* Tabla por Colectivo */}
-          <h2 className="text-lg font-bold mt-6">Tabla por Colectivo</h2>
-          <div className="overflow-x-auto">
-            <Grid
-              data={filasColectivos}
-              columns={columnasColectivos}
-              search={false}
-              pagination={{
-                enabled: true,
-                limit: 10,
-              }}
-              resizable={true}
-              language={{
-                search: {
-                  placeholder: "Buscar...",
-                },
-                pagination: {
-                  previous: "Anterior",
-                  next: "Siguiente",
-                  showing: "Mostrando",
-                  results: () => "resultados",
-                  to: "de",
-                  of: "de",
-                },
-                noRecordsFound: "No se encontraron leads en este momento",
-              }}
-              className={{
-                table: "table-auto min-w-full text-sm",
-                header: "bg-gray-100 text-gray-700 font-bold whitespace-nowrap",
-                row: "hover:bg-gray-50",
-              }}
-            />
-          </div>
+      {/* Tabla de Evolución de Leads por colectivo */}
+      <h2 className="text-lg font-bold mt-6">
+        Evolución de Leads por colectivo
+      </h2>
+      <div className="overflow-x-auto mb-6">
+        <Grid
+          data={filasColectivos}
+          columns={columnasColectivos}
+          search={false}
+          pagination={{
+            enabled: true,
+            limit: 10,
+          }}
+          resizable={true}
+          language={{
+            search: {
+              placeholder: "Buscar...",
+            },
+            pagination: {
+              previous: "Anterior",
+              next: "Siguiente",
+              showing: "Mostrando",
+              results: () => "resultados",
+              to: "de",
+              of: "de",
+            },
+            noRecordsFound: "No se encontraron leads en este momento",
+          }}
+          className={{
+            table: "table-auto min-w-full text-sm",
+            header: "bg-gray-100 text-gray-700 font-bold whitespace-nowrap",
+            row: "hover:bg-gray-50",
+          }}
+        />
+      </div>
 
-          {/* Evolución diaria */}
-          <h2 className="text-lg font-bold mt-6">
-            Evolución de Leads por horas (Hoy)
-          </h2>
-          <div className="overflow-x-auto mb-6">
-            <Grid
-              data={datosPorHora.map((grupo) => [
-                grupo.hora,
-                grupo.count,
-                Object.entries(grupo.colectivos)
-                  .map(([colectivo, count]) => `${colectivo}: ${count}`)
-                  .join(", "),
-              ])}
-              columns={[
-                { name: "Hora", id: "hora" },
-                { name: "Cantidad", id: "count" },
-                { name: "Colectivos", id: "colectivos" },
-              ]}
-              search={false}
-              pagination={{
-                enabled: true,
-                limit: 10,
-              }}
-              resizable={true}
-              language={{
-                search: {
-                  placeholder: "Buscar...",
-                },
-                pagination: {
-                  previous: "Anterior",
-                  next: "Siguiente",
-                  showing: "Mostrando",
-                  results: () => "resultados",
-                  to: "de",
-                  of: "de",
-                },
-                noRecordsFound: "No se encontraron leads en este momento",
-              }}
-              className={{
-                table: "table-auto min-w-full text-sm",
-                header: "bg-gray-100 text-gray-700 font-bold whitespace-nowrap",
-                row: "hover:bg-gray-50",
-              }}
-            />
-          </div>
-
-          {/* Tabla por Fuente */}
-          <h2 className="text-lg font-bold mt-6">Tabla por Fuente</h2>
-          <div className="overflow-x-auto">
-            <Grid
-              data={filasFuentes}
-              columns={columnasFuentes}
-              search={false}
-              pagination={{
-                enabled: true,
-                limit: 10,
-              }}
-              resizable={true}
-              language={{
-                search: {
-                  placeholder: "Buscar...",
-                },
-                pagination: {
-                  previous: "Anterior",
-                  next: "Siguiente",
-                  showing: "Mostrando",
-                  results: () => "resultados",
-                  to: "de",
-                  of: "de",
-                },
-                noRecordsFound: "No se encontraron leads en este momento",
-              }}
-              className={{
-                table: "table-auto min-w-full text-sm",
-                header: "bg-gray-100 text-gray-700 font-bold whitespace-nowrap",
-                row: "hover:bg-gray-50",
-              }}
-            />
-          </div>
-        </div>
-      )}
+      {/* Tabla de Evolución de Leads por fuente */}
+      <h2 className="text-lg font-bold mt-6">Evolución de Leads por fuente</h2>
+      <div className="overflow-x-auto mb-6">
+        <Grid
+          data={filasFuentes}
+          columns={columnasFuentes}
+          search={false}
+          pagination={{
+            enabled: true,
+            limit: 10,
+          }}
+          resizable={true}
+          language={{
+            search: {
+              placeholder: "Buscar...",
+            },
+            pagination: {
+              previous: "Anterior",
+              next: "Siguiente",
+              showing: "Mostrando",
+              results: () => "resultados",
+              to: "de",
+              of: "de",
+            },
+            noRecordsFound: "No se encontraron leads en este momento",
+          }}
+          className={{
+            table: "table-auto min-w-full text-sm",
+            header: "bg-gray-100 text-gray-700 font-bold whitespace-nowrap",
+            row: "hover:bg-gray-50",
+          }}
+        />
+      </div>
     </div>
   );
 };
