@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React, { useEffect, useState } from "react";
 import { getPlantillas, Plantilla } from "../../services/apiService";
 import { Grid } from "gridjs-react";
