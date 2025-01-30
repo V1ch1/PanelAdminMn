@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React, { useEffect, useState } from "react";
 import { getPlantillas, Plantilla } from "../../services/apiService";
 import { Grid } from "gridjs-react";
@@ -59,7 +58,6 @@ const Plantillas: React.FC = () => {
         sort={true}
         resizable={true}
         pagination={{
-          enabled: true,
           limit: 50,
         }}
         language={{
@@ -76,7 +74,7 @@ const Plantillas: React.FC = () => {
         }}
         className={{
           table: "table-auto min-w-full text-sm",
-          row: "hover:bg-gray-50",
+          tr: "hover:bg-gray-50",
         }}
       />
     </div>

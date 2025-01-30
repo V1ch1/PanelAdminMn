@@ -1,9 +1,7 @@
-// @ts-nocheck
 import React, { useEffect, useState } from "react";
 import { getEvents, Event } from "../../services/apiService";
 import { Grid } from "gridjs-react";
 import "gridjs/dist/theme/mermaid.css";
-import { SkeletonLoader } from "../SkeletonLoader/SkeletonLoader";
 import PlantillasTab from "./Plantillas";
 
 const Informes: React.FC = () => {
@@ -89,40 +87,48 @@ const Informes: React.FC = () => {
     return grupos.filter((grupo) => grupo.count > 0); // Filtrar las horas sin leads
   };
 
+  interface Agrupado {
+    colectivo: Record<string, number>;
+    fuente: Record<string, number>;
+  }
+
   const agruparPorDiaYColectivo = (eventos: Event[]) => {
-    const grupos = eventos.reduce((acumulador: any, evento: Event) => {
-      const fechaObj = new Date(evento.created_at);
+    const grupos = eventos.reduce(
+      (acumulador: Record<string, Agrupado>, evento: Event) => {
+        const fechaObj = new Date(evento.created_at);
 
-      const diaReducido = fechaObj
-        .toLocaleDateString("es-ES", { weekday: "short" })
-        .replace(/^\w/, (c) => c.toUpperCase());
+        const diaReducido = fechaObj
+          .toLocaleDateString("es-ES", { weekday: "short" })
+          .replace(/^\w/, (c) => c.toUpperCase());
 
-      const fecha = `${diaReducido}, ${fechaObj.toLocaleDateString("es-ES", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-      })}`;
+        const fecha = `${diaReducido}, ${fechaObj.toLocaleDateString("es-ES", {
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+        })}`;
 
-      const colectivo = corregirNombreColectivo(
-        evento.colectivo || "Desconocido"
-      );
-      const fuente = evento.fuente || "Desconocido";
+        const colectivo = corregirNombreColectivo(
+          evento.colectivo || "Desconocido"
+        );
+        const fuente = evento.fuente || "Desconocido";
 
-      if (!acumulador[fecha]) {
-        acumulador[fecha] = { colectivo: {}, fuente: {} };
-      }
+        if (!acumulador[fecha]) {
+          acumulador[fecha] = { colectivo: {}, fuente: {} };
+        }
 
-      if (!acumulador[fecha].colectivo[colectivo]) {
-        acumulador[fecha].colectivo[colectivo] = 0;
-      }
-      if (!acumulador[fecha].fuente[fuente]) {
-        acumulador[fecha].fuente[fuente] = 0;
-      }
+        if (!acumulador[fecha].colectivo[colectivo]) {
+          acumulador[fecha].colectivo[colectivo] = 0;
+        }
+        if (!acumulador[fecha].fuente[fuente]) {
+          acumulador[fecha].fuente[fuente] = 0;
+        }
 
-      acumulador[fecha].colectivo[colectivo]++;
-      acumulador[fecha].fuente[fuente]++;
-      return acumulador;
-    }, {});
+        acumulador[fecha].colectivo[colectivo]++;
+        acumulador[fecha].fuente[fuente]++;
+        return acumulador;
+      },
+      {} as Record<string, Agrupado>
+    );
 
     return grupos;
   };
@@ -146,8 +152,13 @@ const Informes: React.FC = () => {
     { name: "TOTAL", id: "total", width: "100px" },
   ];
 
+  interface DatosAgrupados {
+    colectivo: Record<string, number>;
+    fuente: Record<string, number>;
+  }
   const filasColectivos = Object.entries(datosAgrupados).map(
-    ([fecha, datos]: any) => {
+    ([fecha, datos]: [string, DatosAgrupados]) => {
+      // Usamos DatosAgrupados como tipo de datos
       const valores = columnasColectivos
         .slice(1, -1)
         .map((columna) => datos.colectivo[columna.name] || 0);
@@ -172,10 +183,11 @@ const Informes: React.FC = () => {
   ];
 
   const filasFuentes = Object.entries(datosAgrupados).map(
-    ([fecha, datos]: any) => {
+    ([fecha, datos]: [string, DatosAgrupados]) => {
+      // Usamos DatosAgrupados como tipo de datos
       const valores = columnasFuentes
         .slice(1, -1)
-        .map((columna) => datos.fuente[columna.name] || 0);
+        .map((columna) => datos.fuente[columna.name] || 0); // Accedemos a "fuente" aquí
       const total = valores.reduce(
         (acc, val) => acc + (typeof val === "number" ? val : 0),
         0
@@ -300,7 +312,7 @@ const Informes: React.FC = () => {
                   table: "table-auto min-w-full text-sm",
                   header:
                     "bg-blue-600 text-white font-bold text-2xl text-center p-4",
-                  row: "hover:bg-gray-50",
+                  tr: "hover:bg-gray-50",
                 }}
               />
             </div>
@@ -318,7 +330,6 @@ const Informes: React.FC = () => {
                 columns={columnasColectivos}
                 search={false}
                 pagination={{
-                  enabled: true,
                   limit: 10,
                 }}
                 resizable={true}
@@ -338,7 +349,7 @@ const Informes: React.FC = () => {
                   table: "table-auto min-w-full text-sm",
                   header:
                     "bg-gray-100 text-gray-700 font-bold whitespace-nowrap",
-                  row: "hover:bg-gray-50",
+                  tr: "hover:bg-gray-50",
                 }}
               />
             </div>
@@ -356,7 +367,6 @@ const Informes: React.FC = () => {
                 columns={columnasFuentes}
                 search={false}
                 pagination={{
-                  enabled: true,
                   limit: 10,
                 }}
                 resizable={true}
@@ -376,7 +386,7 @@ const Informes: React.FC = () => {
                   table: "table-auto min-w-full text-sm",
                   header:
                     "bg-gray-100 text-gray-700 font-bold whitespace-nowrap",
-                  row: "hover:bg-gray-50",
+                  tr: "hover:bg-gray-50",
                 }}
               />
             </div>
