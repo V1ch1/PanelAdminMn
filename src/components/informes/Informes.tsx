@@ -6,23 +6,16 @@ import PlantillasTab from "./Plantillas";
 
 const Informes: React.FC = () => {
   const [eventos, setEventos] = useState<Event[]>([]);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
   const [selectedTab, setSelectedTab] = useState(0); // 0: "Por hora", 1: "Por colectivo", 2: "Por fuente", 3: "Plantillas"
 
   useEffect(() => {
     const cargarEventos = async () => {
-      setLoading(true);
-      setError(null);
       try {
         const pendientes = await getEvents("pendiente");
         const gestionados = await getEvents("gestionado");
         setEventos([...pendientes, ...gestionados]);
       } catch (err: unknown) {
-        setError("Error al cargar los eventos.");
         console.error("Error al cargar los eventos:", err);
-      } finally {
-        setLoading(false);
       }
     };
 
@@ -158,7 +151,6 @@ const Informes: React.FC = () => {
   }
   const filasColectivos = Object.entries(datosAgrupados).map(
     ([fecha, datos]: [string, DatosAgrupados]) => {
-      // Usamos DatosAgrupados como tipo de datos
       const valores = columnasColectivos
         .slice(1, -1)
         .map((columna) => datos.colectivo[columna.name] || 0);
@@ -184,7 +176,6 @@ const Informes: React.FC = () => {
 
   const filasFuentes = Object.entries(datosAgrupados).map(
     ([fecha, datos]: [string, DatosAgrupados]) => {
-      // Usamos DatosAgrupados como tipo de datos
       const valores = columnasFuentes
         .slice(1, -1)
         .map((columna) => datos.fuente[columna.name] || 0); // Accedemos a "fuente" aquí
@@ -235,10 +226,10 @@ const Informes: React.FC = () => {
           {/* Tab 1: Por hora */}
           <li className="mr-1">
             <button
-              className={`px-4 py-2 text-sm font-medium ${
+              className={`px-4 py-2 font-semibold ${
                 selectedTab === 0
-                  ? "border-b-2 border-black text-black"
-                  : "text-gray-500 hover:text-gray-700"
+                  ? "border-b-2 border-[#1371CF] text-[#1371CF]"
+                  : "text-gray-500 hover:text-[#1371CF]"
               }`}
               onClick={() => setSelectedTab(0)}
             >
@@ -249,10 +240,10 @@ const Informes: React.FC = () => {
           {/* Tab 2: Por colectivo */}
           <li className="mr-1">
             <button
-              className={`px-4 py-2 text-sm font-medium ${
+              className={`px-4 py-2 font-semibold ${
                 selectedTab === 1
-                  ? "border-b-2 border-black text-black"
-                  : "text-gray-500 hover:text-gray-700"
+                  ? "border-b-2 border-[#1371CF] text-[#1371CF]"
+                  : "text-gray-500 hover:text-[#1371CF]"
               }`}
               onClick={() => setSelectedTab(1)}
             >
@@ -263,10 +254,10 @@ const Informes: React.FC = () => {
           {/* Tab 3: Por fuente */}
           <li className="mr-1">
             <button
-              className={`px-4 py-2 text-sm font-medium ${
+              className={`px-4 py-2 font-semibold ${
                 selectedTab === 2
-                  ? "border-b-2 border-black text-black"
-                  : "text-gray-500 hover:text-gray-700"
+                  ? "border-b-2 border-[#1371CF] text-[#1371CF]"
+                  : "text-gray-500 hover:text-[#1371CF]"
               }`}
               onClick={() => setSelectedTab(2)}
             >
@@ -277,10 +268,10 @@ const Informes: React.FC = () => {
           {/* Tab 4: Plantillas */}
           <li className="mr-1">
             <button
-              className={`px-4 py-2 text-sm font-medium ${
+              className={`px-4 py-2 font-semibold ${
                 selectedTab === 3
-                  ? "border-b-2 border-black text-black"
-                  : "text-gray-500 hover:text-gray-700"
+                  ? "border-b-2 border-[#1371CF] text-[#1371CF]"
+                  : "text-gray-500 hover:text-[#1371CF]"
               }`}
               onClick={() => setSelectedTab(3)}
             >
@@ -293,27 +284,66 @@ const Informes: React.FC = () => {
       {/* Tab Content */}
       {selectedTab === 0 && (
         <div className="p-4">
-          <h2 className="text-xl font-semibold mb-4">Por Hora</h2>
           <Grid
             data={filasPorHoraConTotal}
             columns={["Hora", "Leads", "Colectivos"]}
+            sort={true}
+            resizable={true}
+            pagination={{
+              limit: 50,
+            }}
+            language={{
+              search: { placeholder: "Buscar..." },
+              pagination: {
+                previous: "Anterior",
+                next: "Siguiente",
+                showing: "Mostrando",
+                results: () => "resultados",
+                to: "de",
+                of: "de",
+              },
+              noRecordsFound: "No se encontraron plantillas",
+            }}
+            className={{
+              table: "table-auto min-w-full text-sm",
+              tr: "hover:bg-gray-50",
+            }}
           />
         </div>
       )}
 
       {selectedTab === 1 && (
         <div className="p-4">
-          <h2 className="text-xl font-semibold mb-4">Por Colectivo</h2>
           <Grid
             data={filasColectivos}
             columns={columnasColectivos.map((columna) => columna.name)}
+            sort={true}
+            resizable={true}
+            pagination={{
+              limit: 50,
+            }}
+            language={{
+              search: { placeholder: "Buscar..." },
+              pagination: {
+                previous: "Anterior",
+                next: "Siguiente",
+                showing: "Mostrando",
+                results: () => "resultados",
+                to: "de",
+                of: "de",
+              },
+              noRecordsFound: "No se encontraron plantillas",
+            }}
+            className={{
+              table: "table-auto min-w-full text-sm",
+              tr: "hover:bg-gray-50",
+            }}
           />
         </div>
       )}
 
       {selectedTab === 2 && (
         <div className="p-4">
-          <h2 className="text-xl font-semibold mb-4">Por Fuente</h2>
           <Grid
             data={filasFuentes}
             columns={columnasFuentes.map((columna) => columna.name)}
