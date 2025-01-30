@@ -65,7 +65,6 @@ const DataTable: React.FC = () => {
     event.asunto || "N/A",
     event.fuente || "N/A",
     event.section || "N/A",
-
     h(
       "button",
       {

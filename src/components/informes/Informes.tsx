@@ -4,11 +4,13 @@ import { getEvents, Event } from "../../services/apiService";
 import { Grid } from "gridjs-react";
 import "gridjs/dist/theme/mermaid.css";
 import { SkeletonLoader } from "../SkeletonLoader/SkeletonLoader";
+import PlantillasTab from "./Plantillas";
 
 const Informes: React.FC = () => {
   const [eventos, setEventos] = useState<Event[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [selectedTab, setSelectedTab] = useState(0); // 0: "Por hora", 1: "Por colectivo", 2: "Por fuente", 3: "Plantillas"
 
   useEffect(() => {
     const cargarEventos = async () => {
@@ -182,7 +184,6 @@ const Informes: React.FC = () => {
     }
   );
 
-  // Sumar total de todas las horas
   const totalPorHora = datosPorHora.reduce(
     (total, grupo) => {
       total.count += grupo.count;
@@ -216,102 +217,173 @@ const Informes: React.FC = () => {
     <div className="p-4">
       <h1 className="text-2xl font-bold mb-6">Informe de Leads</h1>
 
-      {/* Tabla de Evolución de Leads por horas (Hoy) */}
-      <h2 className="text-lg font-bold mt-6">
-        Evolución de Leads por horas (Hoy)
-      </h2>
-      <div className="overflow-x-auto mb-6">
-        <Grid
-          data={filasPorHoraConTotal}
-          columns={[
-            { name: "Hora", id: "hora" },
-            { name: "Cantidad", id: "count" },
-            { name: "Colectivos", id: "colectivos" },
-          ]}
-          search={false}
-          pagination={false}
-          language={{
-            search: {
-              placeholder: "Buscar...",
-            },
-            noRecordsFound: "No se encontraron leads en este momento",
-          }}
-          className={{
-            table: "table-auto min-w-full text-sm",
-            header: "bg-blue-600 text-white font-bold text-2xl text-center p-4",
-            row: "hover:bg-gray-50",
-          }}
-        />
+      {/* Tabs */}
+      <div className="mb-4">
+        <ul className="flex border-b">
+          {/* Tab 1: Por hora */}
+          <li className="mr-1">
+            <button
+              className={`${
+                selectedTab === 0
+                  ? "border-blue-500 text-blue-500"
+                  : "border-transparent text-gray-500"
+              } inline-block py-2 px-4 border-b-2 font-semibold hover:text-blue-500`}
+              onClick={() => setSelectedTab(0)}
+            >
+              Hoy
+            </button>
+          </li>
+          {/* Tab 2: Por colectivo */}
+          <li className="mr-1">
+            <button
+              className={`${
+                selectedTab === 1
+                  ? "border-blue-500 text-blue-500"
+                  : "border-transparent text-gray-500"
+              } inline-block py-2 px-4 border-b-2 font-semibold hover:text-blue-500`}
+              onClick={() => setSelectedTab(1)}
+            >
+              Colectivos
+            </button>
+          </li>
+          {/* Tab 3: Por fuente */}
+          <li className="mr-1">
+            <button
+              className={`${
+                selectedTab === 2
+                  ? "border-blue-500 text-blue-500"
+                  : "border-transparent text-gray-500"
+              } inline-block py-2 px-4 border-b-2 font-semibold hover:text-blue-500`}
+              onClick={() => setSelectedTab(2)}
+            >
+              Fuentes
+            </button>
+          </li>
+          {/* Tab 4: Plantillas */}
+          <li className="mr-1">
+            <button
+              className={`${
+                selectedTab === 3
+                  ? "border-blue-500 text-blue-500"
+                  : "border-transparent text-gray-500"
+              } inline-block py-2 px-4 border-b-2 font-semibold hover:text-blue-500`}
+              onClick={() => setSelectedTab(3)}
+            >
+              Plantillas
+            </button>
+          </li>
+        </ul>
       </div>
 
-      {/* Tabla de Evolución de Leads por colectivo */}
-      <h2 className="text-lg font-bold mt-6">
-        Evolución de Leads por colectivo
-      </h2>
-      <div className="overflow-x-auto mb-6">
-        <Grid
-          data={filasColectivos}
-          columns={columnasColectivos}
-          search={false}
-          pagination={{
-            enabled: true,
-            limit: 10,
-          }}
-          resizable={true}
-          language={{
-            search: {
-              placeholder: "Buscar...",
-            },
-            pagination: {
-              previous: "Anterior",
-              next: "Siguiente",
-              showing: "Mostrando",
-              results: () => "resultados",
-              to: "de",
-              of: "de",
-            },
-            noRecordsFound: "No se encontraron leads en este momento",
-          }}
-          className={{
-            table: "table-auto min-w-full text-sm",
-            header: "bg-gray-100 text-gray-700 font-bold whitespace-nowrap",
-            row: "hover:bg-gray-50",
-          }}
-        />
-      </div>
+      {/* Contenido de las tablas */}
+      <div className="mb-6">
+        {selectedTab === 0 && (
+          <>
+            <h2 className="text-lg font-bold mt-6">
+              Evolución de Leads por horas (Hoy)
+            </h2>
+            <div className="overflow-x-auto mb-6">
+              <Grid
+                data={filasPorHoraConTotal}
+                columns={[
+                  { name: "Hora", id: "hora" },
+                  { name: "Cantidad", id: "count" },
+                  { name: "Colectivos", id: "colectivos" },
+                ]}
+                search={false}
+                pagination={false}
+                language={{
+                  search: { placeholder: "Buscar..." },
+                  noRecordsFound: "No se encontraron leads en este momento",
+                }}
+                className={{
+                  table: "table-auto min-w-full text-sm",
+                  header:
+                    "bg-blue-600 text-white font-bold text-2xl text-center p-4",
+                  row: "hover:bg-gray-50",
+                }}
+              />
+            </div>
+          </>
+        )}
 
-      {/* Tabla de Evolución de Leads por fuente */}
-      <h2 className="text-lg font-bold mt-6">Evolución de Leads por fuente</h2>
-      <div className="overflow-x-auto mb-6">
-        <Grid
-          data={filasFuentes}
-          columns={columnasFuentes}
-          search={false}
-          pagination={{
-            enabled: true,
-            limit: 10,
-          }}
-          resizable={true}
-          language={{
-            search: {
-              placeholder: "Buscar...",
-            },
-            pagination: {
-              previous: "Anterior",
-              next: "Siguiente",
-              showing: "Mostrando",
-              results: () => "resultados",
-              to: "de",
-              of: "de",
-            },
-            noRecordsFound: "No se encontraron leads en este momento",
-          }}
-          className={{
-            table: "table-auto min-w-full text-sm",
-            header: "bg-gray-100 text-gray-700 font-bold whitespace-nowrap",
-            row: "hover:bg-gray-50",
-          }}
-        />
+        {selectedTab === 1 && (
+          <>
+            <h2 className="text-lg font-bold mt-6">
+              Evolución de Leads por colectivo
+            </h2>
+            <div className="overflow-x-auto mb-6">
+              <Grid
+                data={filasColectivos}
+                columns={columnasColectivos}
+                search={false}
+                pagination={{
+                  enabled: true,
+                  limit: 10,
+                }}
+                resizable={true}
+                language={{
+                  search: { placeholder: "Buscar..." },
+                  pagination: {
+                    previous: "Anterior",
+                    next: "Siguiente",
+                    showing: "Mostrando",
+                    results: () => "resultados",
+                    to: "de",
+                    of: "de",
+                  },
+                  noRecordsFound: "No se encontraron leads en este momento",
+                }}
+                className={{
+                  table: "table-auto min-w-full text-sm",
+                  header:
+                    "bg-gray-100 text-gray-700 font-bold whitespace-nowrap",
+                  row: "hover:bg-gray-50",
+                }}
+              />
+            </div>
+          </>
+        )}
+
+        {selectedTab === 2 && (
+          <>
+            <h2 className="text-lg font-bold mt-6">
+              Evolución de Leads por fuente
+            </h2>
+            <div className="overflow-x-auto mb-6">
+              <Grid
+                data={filasFuentes}
+                columns={columnasFuentes}
+                search={false}
+                pagination={{
+                  enabled: true,
+                  limit: 10,
+                }}
+                resizable={true}
+                language={{
+                  search: { placeholder: "Buscar..." },
+                  pagination: {
+                    previous: "Anterior",
+                    next: "Siguiente",
+                    showing: "Mostrando",
+                    results: () => "resultados",
+                    to: "de",
+                    of: "de",
+                  },
+                  noRecordsFound: "No se encontraron leads en este momento",
+                }}
+                className={{
+                  table: "table-auto min-w-full text-sm",
+                  header:
+                    "bg-gray-100 text-gray-700 font-bold whitespace-nowrap",
+                  row: "hover:bg-gray-50",
+                }}
+              />
+            </div>
+          </>
+        )}
+
+        {selectedTab === 3 && <PlantillasTab />}
       </div>
     </div>
   );
