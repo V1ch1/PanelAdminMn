@@ -235,50 +235,53 @@ const Informes: React.FC = () => {
           {/* Tab 1: Por hora */}
           <li className="mr-1">
             <button
-              className={`${
+              className={`px-4 py-2 text-sm font-medium ${
                 selectedTab === 0
-                  ? "border-blue-500 text-blue-500"
-                  : "border-transparent text-gray-500"
-              } inline-block py-2 px-4 border-b-2 font-semibold hover:text-blue-500`}
+                  ? "border-b-2 border-black text-black"
+                  : "text-gray-500 hover:text-gray-700"
+              }`}
               onClick={() => setSelectedTab(0)}
             >
-              Hoy
+              Por hora
             </button>
           </li>
+
           {/* Tab 2: Por colectivo */}
           <li className="mr-1">
             <button
-              className={`${
+              className={`px-4 py-2 text-sm font-medium ${
                 selectedTab === 1
-                  ? "border-blue-500 text-blue-500"
-                  : "border-transparent text-gray-500"
-              } inline-block py-2 px-4 border-b-2 font-semibold hover:text-blue-500`}
+                  ? "border-b-2 border-black text-black"
+                  : "text-gray-500 hover:text-gray-700"
+              }`}
               onClick={() => setSelectedTab(1)}
             >
-              Colectivos
+              Por colectivo
             </button>
           </li>
+
           {/* Tab 3: Por fuente */}
           <li className="mr-1">
             <button
-              className={`${
+              className={`px-4 py-2 text-sm font-medium ${
                 selectedTab === 2
-                  ? "border-blue-500 text-blue-500"
-                  : "border-transparent text-gray-500"
-              } inline-block py-2 px-4 border-b-2 font-semibold hover:text-blue-500`}
+                  ? "border-b-2 border-black text-black"
+                  : "text-gray-500 hover:text-gray-700"
+              }`}
               onClick={() => setSelectedTab(2)}
             >
-              Fuentes
+              Por fuente
             </button>
           </li>
+
           {/* Tab 4: Plantillas */}
           <li className="mr-1">
             <button
-              className={`${
+              className={`px-4 py-2 text-sm font-medium ${
                 selectedTab === 3
-                  ? "border-blue-500 text-blue-500"
-                  : "border-transparent text-gray-500"
-              } inline-block py-2 px-4 border-b-2 font-semibold hover:text-blue-500`}
+                  ? "border-b-2 border-black text-black"
+                  : "text-gray-500 hover:text-gray-700"
+              }`}
               onClick={() => setSelectedTab(3)}
             >
               Plantillas
@@ -287,114 +290,38 @@ const Informes: React.FC = () => {
         </ul>
       </div>
 
-      {/* Contenido de las tablas */}
-      <div className="mb-6">
-        {selectedTab === 0 && (
-          <>
-            <h2 className="text-lg font-bold mt-6">
-              Evolución de Leads por horas (Hoy)
-            </h2>
-            <div className="overflow-x-auto mb-6">
-              <Grid
-                data={filasPorHoraConTotal}
-                columns={[
-                  { name: "Hora", id: "hora" },
-                  { name: "Cantidad", id: "count" },
-                  { name: "Colectivos", id: "colectivos" },
-                ]}
-                search={false}
-                pagination={false}
-                language={{
-                  search: { placeholder: "Buscar..." },
-                  noRecordsFound: "No se encontraron leads en este momento",
-                }}
-                className={{
-                  table: "table-auto min-w-full text-sm",
-                  header:
-                    "bg-blue-600 text-white font-bold text-2xl text-center p-4",
-                  tr: "hover:bg-gray-50",
-                }}
-              />
-            </div>
-          </>
-        )}
+      {/* Tab Content */}
+      {selectedTab === 0 && (
+        <div className="p-4">
+          <h2 className="text-xl font-semibold mb-4">Por Hora</h2>
+          <Grid
+            data={filasPorHoraConTotal}
+            columns={["Hora", "Leads", "Colectivos"]}
+          />
+        </div>
+      )}
 
-        {selectedTab === 1 && (
-          <>
-            <h2 className="text-lg font-bold mt-6">
-              Evolución de Leads por colectivo
-            </h2>
-            <div className="overflow-x-auto mb-6">
-              <Grid
-                data={filasColectivos}
-                columns={columnasColectivos}
-                search={false}
-                pagination={{
-                  limit: 10,
-                }}
-                resizable={true}
-                language={{
-                  search: { placeholder: "Buscar..." },
-                  pagination: {
-                    previous: "Anterior",
-                    next: "Siguiente",
-                    showing: "Mostrando",
-                    results: () => "resultados",
-                    to: "de",
-                    of: "de",
-                  },
-                  noRecordsFound: "No se encontraron leads en este momento",
-                }}
-                className={{
-                  table: "table-auto min-w-full text-sm",
-                  header:
-                    "bg-gray-100 text-gray-700 font-bold whitespace-nowrap",
-                  tr: "hover:bg-gray-50",
-                }}
-              />
-            </div>
-          </>
-        )}
+      {selectedTab === 1 && (
+        <div className="p-4">
+          <h2 className="text-xl font-semibold mb-4">Por Colectivo</h2>
+          <Grid
+            data={filasColectivos}
+            columns={columnasColectivos.map((columna) => columna.name)}
+          />
+        </div>
+      )}
 
-        {selectedTab === 2 && (
-          <>
-            <h2 className="text-lg font-bold mt-6">
-              Evolución de Leads por fuente
-            </h2>
-            <div className="overflow-x-auto mb-6">
-              <Grid
-                data={filasFuentes}
-                columns={columnasFuentes}
-                search={false}
-                pagination={{
-                  limit: 10,
-                }}
-                resizable={true}
-                language={{
-                  search: { placeholder: "Buscar..." },
-                  pagination: {
-                    previous: "Anterior",
-                    next: "Siguiente",
-                    showing: "Mostrando",
-                    results: () => "resultados",
-                    to: "de",
-                    of: "de",
-                  },
-                  noRecordsFound: "No se encontraron leads en este momento",
-                }}
-                className={{
-                  table: "table-auto min-w-full text-sm",
-                  header:
-                    "bg-gray-100 text-gray-700 font-bold whitespace-nowrap",
-                  tr: "hover:bg-gray-50",
-                }}
-              />
-            </div>
-          </>
-        )}
+      {selectedTab === 2 && (
+        <div className="p-4">
+          <h2 className="text-xl font-semibold mb-4">Por Fuente</h2>
+          <Grid
+            data={filasFuentes}
+            columns={columnasFuentes.map((columna) => columna.name)}
+          />
+        </div>
+      )}
 
-        {selectedTab === 3 && <PlantillasTab />}
-      </div>
+      {selectedTab === 3 && <PlantillasTab />}
     </div>
   );
 };
