@@ -223,20 +223,6 @@ const Informes: React.FC = () => {
       {/* Tabs */}
       <div className="mb-4">
         <ul className="flex border-b">
-          {/* Tab 1: Por hora */}
-          <li className="mr-1">
-            <button
-              className={`px-4 py-2 font-semibold ${
-                selectedTab === 0
-                  ? "border-b-2 border-[#1371CF] text-[#1371CF]"
-                  : "text-gray-500 hover:text-[#1371CF]"
-              }`}
-              onClick={() => setSelectedTab(0)}
-            >
-              Por hora
-            </button>
-          </li>
-
           {/* Tab 2: Por colectivo */}
           <li className="mr-1">
             <button
@@ -247,21 +233,20 @@ const Informes: React.FC = () => {
               }`}
               onClick={() => setSelectedTab(1)}
             >
-              Por colectivo
+              Colectivos
             </button>
           </li>
-
-          {/* Tab 3: Por fuente */}
+          {/* Tab 1: Por hora */}
           <li className="mr-1">
             <button
               className={`px-4 py-2 font-semibold ${
-                selectedTab === 2
+                selectedTab === 0
                   ? "border-b-2 border-[#1371CF] text-[#1371CF]"
                   : "text-gray-500 hover:text-[#1371CF]"
               }`}
-              onClick={() => setSelectedTab(2)}
+              onClick={() => setSelectedTab(0)}
             >
-              Por fuente
+              Horas
             </button>
           </li>
 
@@ -276,6 +261,19 @@ const Informes: React.FC = () => {
               onClick={() => setSelectedTab(3)}
             >
               Plantillas
+            </button>
+          </li>
+          {/* Tab 3: Por fuente */}
+          <li className="mr-1">
+            <button
+              className={`px-4 py-2 font-semibold ${
+                selectedTab === 2
+                  ? "border-b-2 border-[#1371CF] text-[#1371CF]"
+                  : "text-gray-500 hover:text-[#1371CF]"
+              }`}
+              onClick={() => setSelectedTab(2)}
+            >
+              Fuentes
             </button>
           </li>
         </ul>

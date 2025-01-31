@@ -52,7 +52,7 @@ const Plantillas: React.FC = () => {
         columns={[
           { name: "Fecha Envío", id: "start_date", width: "150px" },
           { name: "Nombre Plantilla", id: "nombre_plantilla", width: "350px" },
-          { name: "Número de Clicks", id: "num_clicks", width: "120px" },
+          { name: "Número de Leads", id: "num_clicks", width: "120px" },
         ]}
         search={true}
         sort={true}
