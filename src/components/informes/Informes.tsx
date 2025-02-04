@@ -6,7 +6,7 @@ import PlantillasTab from "./Plantillas";
 
 const Informes: React.FC = () => {
   const [eventos, setEventos] = useState<Event[]>([]);
-  const [selectedTab, setSelectedTab] = useState(0); // 0: "Por hora", 1: "Por colectivo", 2: "Por fuente", 3: "Plantillas"
+  const [selectedTab, setSelectedTab] = useState(1); // 0: "Por hora", 1: "Por colectivo", 2: "Por fuente", 3: "Plantillas"
 
   useEffect(() => {
     const cargarEventos = async () => {
