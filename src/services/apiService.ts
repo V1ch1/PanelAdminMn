@@ -36,8 +36,9 @@ export interface GetPlantillasResponse {
 
 export const getPlantillas = async (): Promise<Plantilla[]> => {
   try {
+    const response = await axiosInstance.post("/generate-reports", {}); //Llamada obligatoria para actualizar DDBB
     const response = await axiosInstance.get("/reports", {
-      params: { page: 1, limit: 50 }, // Si necesitas más parámetros para la consulta, agrégales aquí
+      params: { page: 1, limit: 50 },
     });
 
     if (
