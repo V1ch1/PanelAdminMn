@@ -36,7 +36,20 @@ export interface GetPlantillasResponse {
 
 export const getPlantillas = async (): Promise<Plantilla[]> => {
   try {
-    await axiosInstance.post("/generate-reports", {}); //Llamada obligatoria para actualizar DDBB
+    // Primera llamada: generar reportes
+    try {
+      await axiosInstance.post("/generate-reports", {});
+    } catch (error: any) {
+      if (error.code === "ECONNABORTED") {
+        throw new Error(
+          "La generación de reportes está tardando más de lo esperado. Por favor, inténtalo de nuevo."
+        );
+      }
+      console.error("Error en generate-reports:", error.message);
+      // Continuamos aunque falle la generación, para intentar obtener los datos existentes
+    }
+
+    // Segunda llamada: obtener reportes
     const response = await axiosInstance.get("/reports", {
       params: { page: 1, limit: 50 },
     });
@@ -51,8 +64,15 @@ export const getPlantillas = async (): Promise<Plantilla[]> => {
     throw new Error("La API devolvió una estructura inesperada");
   } catch (error: any) {
     console.error("Error al obtener las plantillas:", error.message);
+    if (error.code === "ECONNABORTED") {
+      throw new Error(
+        "La operación está tardando más de lo esperado. Por favor, inténtalo de nuevo en unos momentos."
+      );
+    }
     throw new Error(
-      error.response?.data?.message || "Error al obtener las plantillas"
+      error.response?.data?.message ||
+        error.message ||
+        "Error al obtener las plantillas"
     );
   }
 };
