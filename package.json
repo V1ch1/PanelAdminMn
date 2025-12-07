@@ -43,5 +43,15 @@
     "typescript": "~5.6.2",
     "typescript-eslint": "^8.15.0",
     "vite": "^6.0.1"
+  },
+  "overrides": {
+    "react-table": {
+      "react": "$react",
+      "react-dom": "$react-dom"
+    },
+    "react-datepicker": {
+      "react": "$react",
+      "react-dom": "$react-dom"
+    }
   }
 }
